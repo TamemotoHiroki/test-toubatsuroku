@@ -42,3 +42,5 @@ next-env.d.ts
 
 .vercelnode_modules/
 .next/
+.backup_working_files/
+node_modules/
