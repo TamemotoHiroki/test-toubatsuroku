@@ -8,8 +8,5 @@ module.exports = {
   turbopack: {
     root: path.resolve(__dirname),
   },
-  experimental: {
-    // Try disabling Turbopack if the runtime infers the root incorrectly.
-    turbopack: false,
-  },
+  // note: keep turbopack.root to help Turbopack resolve project root
 };
