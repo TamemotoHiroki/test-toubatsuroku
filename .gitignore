@@ -1,6 +1,6 @@
 # dependencies
-/node_modules
-/.pnp
+node_modules/
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -9,15 +9,15 @@
 !.yarn/versions
 
 # testing
-/coverage
+coverage/
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
-/generated
+build/
+generated/
 
 # misc
 .DS_Store
@@ -27,17 +27,30 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
 .env*
 !.env.enc
 
 # vercel
-.vercel
+.vercel/
+.vercelnode_modules/
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
+<<<<<<< HEAD
 .vercelnode_modules/
+/.vercelnode_modules/
+
+# local backups / generated
+.backup_working_files/
+
+# optional: lockfiles and editors
+.vscode/
+*.log
+.next/
+.backup_working_files/
+node_modules/
