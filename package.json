@@ -25,5 +25,18 @@
     "eslint-config-prettier": "^10.1.8",
     "tailwindcss": "^4.3.0",
     "typescript": "^5"
-  }
+  },
+  "description": "https://topaz.dev/projects/620e8fda17221947d2c0 # hello !",
+  "main": "next.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TamemotoHiroki/test-toubatsuroku.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TamemotoHiroki/test-toubatsuroku/issues"
+  },
+  "homepage": "https://github.com/TamemotoHiroki/test-toubatsuroku#readme"
 }
