@@ -1,5 +1,5 @@
 // src/features/quest/hooks/useQuestLogic.ts
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Subject, Player, ScreenType } from "../types";
 
 const INITIAL_SUBJECTS: Subject[] = [
@@ -28,6 +28,69 @@ export const useQuestLogic = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
     null,
   );
+
+  // Persistence settings
+  const STORAGE_KEY = "quest_state_v1";
+  const saveTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Load persisted state on client only
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as any;
+      // Basic version handling: v1 shape
+      if (parsed?.version === 1 || parsed?.version == null) {
+        if (Array.isArray(parsed.subjects)) setSubjects(parsed.subjects);
+        if (parsed.player) setPlayer(parsed.player);
+        if (parsed.currentScreen) setCurrentScreen(parsed.currentScreen);
+        if (parsed.selectedSubjectId) setSelectedSubjectId(parsed.selectedSubjectId);
+      } else {
+        // Future migrations could be handled here
+        // For unknown versions, ignore and keep defaults
+      }
+    } catch (e) {
+      // Ignore parse errors and keep defaults
+      // console.warn("Failed to load quest state", e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save on changes (debounced)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const scheduleSave = () => {
+      if (saveTimer.current) {
+        window.clearTimeout(saveTimer.current);
+      }
+      // debounce 500ms
+      saveTimer.current = window.setTimeout(() => {
+        const payload = {
+          version: 1,
+          subjects,
+          player,
+          currentScreen,
+          selectedSubjectId,
+        };
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch (e) {
+          // ignore quota errors
+        }
+      }, 500);
+    };
+
+    scheduleSave();
+
+    return () => {
+      if (saveTimer.current) {
+        window.clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+    };
+  }, [subjects, player, currentScreen, selectedSubjectId]);
 
   const totalBossHp = useMemo(() => {
     return subjects.reduce((acc, curr) => acc + curr.current_hp, 0);
