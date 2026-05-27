@@ -5,12 +5,13 @@ import { RetroWindow, RetroButton, RetroInput } from "./RetroUI";
 
 interface Props {
   subject: Subject;
-  onAttack: (subjectId: string, minutes: number, tasks: number) => number;
+  onAttack: (subjectId: string, minutes: number, tasks: number) => { damage: number; isDefeated: boolean };
   onBack: () => void;
 }
 
 export const BattleScreen = ({ subject, onAttack, onBack }: Props) => {
   const [isAttacking, setIsAttacking] = useState(false);
+  const [isDefeated, setIsDefeated] = useState(false);
   const [minutes, setMinutes] = useState<string>("");
   const [tasks, setTasks] = useState<string>("");
   const [message, setMessage] = useState<string>(
@@ -24,10 +25,19 @@ export const BattleScreen = ({ subject, onAttack, onBack }: Props) => {
 
     if (min <= 0 && tsk <= 0) return;
 
-    const damage = onAttack(subject.id, min, tsk);
-    setMessage(
-      `ゆうしゃ の こうげき！\n${subject.title} に ${damage} の ダメージ！`,
-    );
+    const result = onAttack(subject.id, min, tsk);
+    const { damage, isDefeated: defeated } = result;
+
+    if (defeated) {
+      setMessage(
+        `${subject.title} を たおした！\n+${min} EXP を獲得した！`,
+      );
+      setIsDefeated(true);
+    } else {
+      setMessage(
+        `ゆうしゃ の こうげき！\n${subject.title} に ${damage} の ダメージ！`,
+      );
+    }
     setIsAttacking(false);
     setMinutes("");
     setTasks("");
@@ -44,7 +54,7 @@ export const BattleScreen = ({ subject, onAttack, onBack }: Props) => {
       </div>
 
       <RetroWindow className="flex items-center justify-center h-48 text-2xl animate-pulse">
-        {subject.title}の巨獣
+        {!isDefeated && `${subject.title}の巨獣`}
       </RetroWindow>
 
       {isAttacking ? (
@@ -90,10 +100,16 @@ export const BattleScreen = ({ subject, onAttack, onBack }: Props) => {
           </RetroWindow>
 
           <RetroWindow className="flex flex-col gap-2 w-1/3">
-            <RetroButton onClick={() => setIsAttacking(true)}>
-              たたかう
-            </RetroButton>
-            <RetroButton onClick={onBack}>にげる</RetroButton>
+            {isDefeated ? (
+              <RetroButton onClick={onBack}>つづける</RetroButton>
+            ) : (
+              <>
+                <RetroButton onClick={() => setIsAttacking(true)}>
+                  たたかう
+                </RetroButton>
+                <RetroButton onClick={onBack}>にげる</RetroButton>
+              </>
+            )}
           </RetroWindow>
         </div>
       )}
