@@ -1,0 +1,23 @@
+提供した元のコード群（page.tsx, useQuestLogic.ts, HomeScreen.tsx）に対して、以下の3つの改修を完全に実装したコードを出力してください。Windsurf AI Assistant Rules（Taipa重視、Codeskipping禁止、Reactのベストプラクティス厳守）に従い、一切の省略を行わずに完全なファイルを出力すること。
+
+【要件1：周回機能（強くてニューゲーム）の実装】
+すべての試練（科目）を倒したクリア画面から、次の周回へ進める「あらたな冒険へ（周回する）」機能を実装してください。
+以下の3つの仕様を厳守すること：
+1. プレイヤー状態：レベル・EXPはリセットせず、そのまま引き継ぐ。
+2. 科目（敵）の初期状態：デフォルト科目は用意せず、空（平和な状態）からスタートさせる。
+3. 戦績（倒した履歴）：リセットせず、周回を重ねるごとに `defeatedSubjects` に累積させる。
+実装にあたり、useQuestLogic 内に明確なクリア状態を管理する `isCleared` ステート（boolean）を追加し、localStorage の保存対象にも含めること。また、ステートをリセットする `resetQuest` 関数を作成すること。
+
+【要件2：JSX内の不正な関数呼び出し（無限ループバグ）の修正】
+元の `page.tsx` では、JSXのレンダリング中に `questLogic.navigateTo("home")` を直接呼び出しているため、無限再レンダリングによるクラッシュと `Type 'void' is not assignable to type 'ReactNode'` のエラーが発生します。
+1. `page.tsx` 内の当該処理を削除し、純粋な条件付きレンダリング（例：`currentScreen === "battle" && questLogic.selectedSubject && ...`）に修正すること。
+2. 不正な画面遷移を防ぐため、`useQuestLogic.ts` 側に `useEffect` を使って「currentScreen が battle なのに selectedSubjectId が無い場合は home に戻す」ガード処理を追加すること。
+
+【要件3：UIの論理矛盾の修正（HomeScreen）】
+クリア画面（全クリ状態）において「新しき試練（科目）を登録する」ボタンが表示されているのは論理的に矛盾するため、科目登録ボタンは未クリア時（ゲーム進行中の画面）のみに表示されるよう、JSXの配置場所を修正すること。
+
+【出力指定】
+変更が必要な以下の3ファイルについて、プレースホルダー（`// ...`）を一切使わず、そのままコピー＆ペーストして動作する完全なコードを出力してください。
+1. src/features/quest/hooks/useQuestLogic.ts
+2. src/app/page.tsx
+3. src/features/quest/components/HomeScreen.tsx
