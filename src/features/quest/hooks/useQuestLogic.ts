@@ -28,6 +28,15 @@ export const useQuestLogic = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
     null,
   );
+  const [defeatedSubjects, setDefeatedSubjects] = useState<
+    Array<{
+      id: string;
+      title: string;
+      exam_date: string;
+      study_minutes: number;
+      tasks_cleared: number;
+    }>
+  >([]);
 
   // Persistence settings
   const STORAGE_KEY = "quest_state_v1";
@@ -115,17 +124,35 @@ export const useQuestLogic = () => {
     studyMinutes: number,
     tasksCleared: number,
   ) => {
-    if (studyMinutes <= 0 && tasksCleared <= 0) return 0;
+    if (studyMinutes <= 0 && tasksCleared <= 0) return { damage: 0, isDefeated: false };
 
     const damage = tasksCleared * 100;
+    const targetSubject = subjects.find((s) => s.id === subjectId);
+    const newHp = targetSubject
+      ? Math.max(0, targetSubject.current_hp - damage)
+      : 0;
+    const isDefeated = newHp <= 0 && targetSubject;
 
     setSubjects((prev) =>
       prev.map((sub) =>
         sub.id === subjectId
-          ? { ...sub, current_hp: Math.max(0, sub.current_hp - damage) }
+          ? { ...sub, current_hp: newHp }
           : sub,
       ),
     );
+
+    if (isDefeated && targetSubject) {
+      setDefeatedSubjects((prev) => [
+        ...prev,
+        {
+          id: targetSubject.id,
+          title: targetSubject.title,
+          exam_date: targetSubject.exam_date,
+          study_minutes: studyMinutes,
+          tasks_cleared: tasksCleared,
+        },
+      ]);
+    }
 
     setPlayer((prev) => {
       const newExp = prev.exp + studyMinutes;
@@ -133,17 +160,26 @@ export const useQuestLogic = () => {
       return { level: newLevel, exp: newExp };
     });
 
-    return damage;
+    return { damage, isDefeated };
   };
 
   const navigateTo = (screen: ScreenType, subjectId?: string) => {
     setCurrentScreen(screen);
     if (subjectId) {
       setSelectedSubjectId(subjectId);
+    } else if (screen === "home") {
+      setSubjects((prev) =>
+        prev.filter((s) => s.current_hp > 0),
+      );
+      setSelectedSubjectId(null);
     }
   };
 
   const selectedSubject = subjects.find((s) => s.id === selectedSubjectId);
+
+  const hasAllBossesDefeated = () => {
+    return subjects.every((s) => s.current_hp <= 0);
+  };
 
   return {
     subjects,
@@ -155,5 +191,7 @@ export const useQuestLogic = () => {
     addSubject,
     attack,
     navigateTo,
+    hasAllBossesDefeated,
+    defeatedSubjects,
   };
 };

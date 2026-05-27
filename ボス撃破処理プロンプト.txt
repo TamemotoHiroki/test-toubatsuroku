@@ -1,0 +1,87 @@
+# 依頼：ボス撃破・クリア判定の実装
+
+テスト討伐録において、敵ボスが撃破される（HP=0）時の画面表示と、全ボス撃破時のクリア判定処理を実装してください。
+
+## 1. 戦闘ロジック拡張（useQuestLogic.ts）
+
+### 1.1 ボス撃破判定関数の追加
+- 関数名：`hasAllBossesDefeated()`
+- 戻り値：boolean
+- 動作：全科目の `current_hp` が 0 以下の場合に `true` を返す
+- 実装：`const allDefeated = subjects.every((s) => s.current_hp <= 0);`
+
+### 1.2 単体ボス撃破判定の追加
+- 戦闘画面から呼び出し可能な判定関数を追加
+- 指定されたボスの `current_hp === 0` かどうかを判定
+- 戻り値：boolean
+
+## 2. 戦闘画面の表示ロジック（BattleScreen.tsx）
+
+### 2.1 ボス撃破状態の検出
+- `subject.current_hp <= 0` の状態を検出
+- 攻撃実行後、条件を確認して UI を切り替え
+
+### 2.2 撃破時のメッセージ表示
+- メッセージウィンドウに以下を表示：
+  ```
+  ${subject.title} を たおした！
+  ```
+- 獲得経験値を追加表示（例：「+100 EXP を獲得した！」）
+
+### 2.3 撃破後のコマンドウィンドウ
+- 撃破前：「▶ たたかう」「▶ にげる」
+- 撃破後：「▶ つづける」（ホーム画面へ戻る）ボタンのみ表示
+- 「たたかう」ボタンは非表示
+
+### 2.4 状態管理
+- `const [isDefeated, setIsDefeated] = useState(false);`
+- 攻撃処理内で `subject.current_hp <= 0` なら `setIsDefeated(true)` を実行
+
+## 3. ホーム画面のクリア判定（HomeScreen.tsx）
+
+### 3.1 全ボス撃破時の表示
+- `hasAllBossesDefeated()` が `true` の場合：
+  - メッセージウィンドウに「すべての試練を のりこえた！」を表示
+  - 中ボス一覧を非表示にする
+  - 「ゲームクリア」の演出テキストを追加表示
+
+### 3.2 条件分岐
+```tsx
+{hasAllBossesDefeated() ? (
+  <RetroWindow className="text-center text-2xl">
+    すべての試練を のりこえた！
+  </RetroWindow>
+) : (
+  // 通常の中ボス一覧
+)}
+```
+
+## 4. データフロー
+
+1. BattleScreen で攻撃実行
+2. `onAttack()` 呼び出し → `useQuestLogic.attack()` でダメージ処理
+3. BattleScreen で `subject.current_hp === 0` を検出
+4. 撃破メッセージ表示 + 「つづける」ボタン表示
+5. 「つづける」でホーム画面へ遷移
+6. HomeScreen で `hasAllBossesDefeated()` をチェック
+7. 全ボス撃破なら、クリア画面表示
+
+## 5. 実装ファイル
+
+- `src/features/quest/hooks/useQuestLogic.ts`
+  - `hasAllBossesDefeated()` 関数を export
+  - 戻り値：boolean
+
+- `src/features/quest/components/BattleScreen.tsx`
+  - ボス撃破判定ロジック追加
+  - 撃破状態フラグ管理
+  - 撃破メッセージ表示
+  - コマンドボタンの条件表示
+
+- `src/features/quest/components/HomeScreen.tsx`
+  - Props に `hasAllBossesDefeated` 関数を追加
+  - クリア判定の条件分岐表示
+
+- `src/app/page.tsx`
+  - useQuestLogic から `hasAllBossesDefeated()` を取得
+  - HomeScreen に props として渡す
