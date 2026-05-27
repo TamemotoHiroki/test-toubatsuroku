@@ -53,8 +53,14 @@ export const BattleScreen = ({ subject, onAttack, onBack }: Props) => {
         </RetroWindow>
       </div>
 
-      <RetroWindow className="flex items-center justify-center h-48 text-2xl animate-pulse">
-        {!isDefeated && `${subject.title}の巨獣`}
+      <RetroWindow className="flex items-center justify-center h-48">
+        {!isDefeated && subject.imageUrl && (
+          <img
+            src={subject.imageUrl}
+            alt={subject.title}
+            className="h-40 w-40 object-contain"
+          />
+        )}
       </RetroWindow>
 
       {isAttacking ? (

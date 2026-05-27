@@ -10,6 +10,7 @@ const INITIAL_SUBJECTS: Subject[] = [
     total_tasks: 5,
     current_hp: 500,
     importance: 4,
+    imageUrl: "/monsters/1.png",
   },
   {
     id: "2",
@@ -18,6 +19,7 @@ const INITIAL_SUBJECTS: Subject[] = [
     total_tasks: 8,
     current_hp: 800,
     importance: 5,
+    imageUrl: "/monsters/2.png",
   },
 ];
 
@@ -110,10 +112,19 @@ export const useQuestLogic = () => {
   }, [subjects]);
 
   const addSubject = (subject: Omit<Subject, "id" | "current_hp">) => {
+    const monsterImages = [
+      "/monsters/1.png",
+      "/monsters/2.png",
+      "/monsters/3.png",
+      "/monsters/4.png",
+    ];
+    const randomImage = monsterImages[Math.floor(Math.random() * monsterImages.length)];
+
     const newSubject: Subject = {
       ...subject,
       id: crypto.randomUUID(),
       current_hp: subject.total_tasks * 100,
+      imageUrl: randomImage,
     };
     setSubjects((prev) => [...prev, newSubject]);
     setCurrentScreen("home");
