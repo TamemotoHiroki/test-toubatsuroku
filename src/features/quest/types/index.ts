@@ -6,6 +6,7 @@ export interface Subject {
   total_tasks: number;
   current_hp: number;
   importance: number;
+  imageUrl?: string;
 }
 
 export interface Player {
