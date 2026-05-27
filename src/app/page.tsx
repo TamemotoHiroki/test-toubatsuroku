@@ -22,20 +22,18 @@ export default function QuestApp() {
             onNavigate={questLogic.navigateTo}
             hasAllBossesDefeated={questLogic.hasAllBossesDefeated}
             defeatedSubjects={questLogic.defeatedSubjects}
+            onResetQuest={questLogic.resetQuest}
           />
         )}
 
-        {questLogic.currentScreen === "battle" ? (
-          questLogic.selectedSubject ? (
+        {questLogic.currentScreen === "battle" &&
+          questLogic.selectedSubject && (
             <BattleScreen
               subject={questLogic.selectedSubject}
               onAttack={questLogic.attack}
               onBack={() => questLogic.navigateTo("home")}
             />
-          ) : (
-            questLogic.navigateTo("home")
-          )
-        ) : null}
+          )}
 
         {questLogic.currentScreen === "register" && (
           <RegisterScreen

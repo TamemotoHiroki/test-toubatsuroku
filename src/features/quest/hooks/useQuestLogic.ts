@@ -21,6 +21,22 @@ const INITIAL_SUBJECTS: Subject[] = [
   },
 ];
 
+interface StoredState {
+  version: number;
+  subjects: Subject[];
+  player: Player;
+  currentScreen: ScreenType;
+  selectedSubjectId: string | null;
+  isCleared: boolean;
+  defeatedSubjects: Array<{
+    id: string;
+    title: string;
+    exam_date: string;
+    study_minutes: number;
+    tasks_cleared: number;
+  }>;
+}
+
 export const useQuestLogic = () => {
   const [subjects, setSubjects] = useState<Subject[]>(INITIAL_SUBJECTS);
   const [player, setPlayer] = useState<Player>({ level: 1, exp: 0 });
@@ -28,6 +44,7 @@ export const useQuestLogic = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
     null,
   );
+  const [isCleared, setIsCleared] = useState<boolean>(false);
   const [defeatedSubjects, setDefeatedSubjects] = useState<
     Array<{
       id: string;
@@ -43,30 +60,27 @@ export const useQuestLogic = () => {
   const saveTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    // Load persisted state on client only
     if (typeof window === "undefined") return;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as any;
-      // Basic version handling: v1 shape
-      if (parsed?.version === 1 || parsed?.version == null) {
+      const parsed = JSON.parse(raw) as Partial<StoredState>;
+      if (parsed?.version === 1) {
         if (Array.isArray(parsed.subjects)) setSubjects(parsed.subjects);
         if (parsed.player) setPlayer(parsed.player);
         if (parsed.currentScreen) setCurrentScreen(parsed.currentScreen);
-        if (parsed.selectedSubjectId) setSelectedSubjectId(parsed.selectedSubjectId);
-      } else {
-        // Future migrations could be handled here
-        // For unknown versions, ignore and keep defaults
+        if (parsed.selectedSubjectId !== undefined)
+          setSelectedSubjectId(parsed.selectedSubjectId);
+        if (typeof parsed.isCleared === "boolean")
+          setIsCleared(parsed.isCleared);
+        if (Array.isArray(parsed.defeatedSubjects))
+          setDefeatedSubjects(parsed.defeatedSubjects);
       }
     } catch (e) {
-      // Ignore parse errors and keep defaults
-      // console.warn("Failed to load quest state", e);
+      // Ignore parse errors
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Save on changes (debounced)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -74,14 +88,15 @@ export const useQuestLogic = () => {
       if (saveTimer.current) {
         window.clearTimeout(saveTimer.current);
       }
-      // debounce 500ms
       saveTimer.current = window.setTimeout(() => {
-        const payload = {
+        const payload: StoredState = {
           version: 1,
           subjects,
           player,
           currentScreen,
           selectedSubjectId,
+          isCleared,
+          defeatedSubjects,
         };
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -99,7 +114,21 @@ export const useQuestLogic = () => {
         saveTimer.current = null;
       }
     };
-  }, [subjects, player, currentScreen, selectedSubjectId]);
+  }, [
+    subjects,
+    player,
+    currentScreen,
+    selectedSubjectId,
+    isCleared,
+    defeatedSubjects,
+  ]);
+
+  // 不正画面遷移のガード
+  useEffect(() => {
+    if (currentScreen === "battle" && !selectedSubjectId) {
+      setCurrentScreen("home");
+    }
+  }, [currentScreen, selectedSubjectId]);
 
   const totalBossHp = useMemo(() => {
     return subjects.reduce((acc, curr) => acc + curr.current_hp, 0);
@@ -108,6 +137,10 @@ export const useQuestLogic = () => {
   const maxBossHp = useMemo(() => {
     return subjects.reduce((acc, curr) => acc + curr.total_tasks * 100, 0);
   }, [subjects]);
+
+  const selectedSubject = useMemo(() => {
+    return subjects.find((s) => s.id === selectedSubjectId);
+  }, [subjects, selectedSubjectId]);
 
   const addSubject = (subject: Omit<Subject, "id" | "current_hp">) => {
     const newSubject: Subject = {
@@ -124,20 +157,19 @@ export const useQuestLogic = () => {
     studyMinutes: number,
     tasksCleared: number,
   ) => {
-    if (studyMinutes <= 0 && tasksCleared <= 0) return { damage: 0, isDefeated: false };
+    if (studyMinutes <= 0 && tasksCleared <= 0)
+      return { damage: 0, isDefeated: false };
 
     const damage = tasksCleared * 100;
     const targetSubject = subjects.find((s) => s.id === subjectId);
     const newHp = targetSubject
       ? Math.max(0, targetSubject.current_hp - damage)
       : 0;
-    const isDefeated = newHp <= 0 && targetSubject;
+    const isDefeated = newHp <= 0 && !!targetSubject;
 
     setSubjects((prev) =>
       prev.map((sub) =>
-        sub.id === subjectId
-          ? { ...sub, current_hp: newHp }
-          : sub,
+        sub.id === subjectId ? { ...sub, current_hp: newHp } : sub,
       ),
     );
 
@@ -168,17 +200,26 @@ export const useQuestLogic = () => {
     if (subjectId) {
       setSelectedSubjectId(subjectId);
     } else if (screen === "home") {
-      setSubjects((prev) =>
-        prev.filter((s) => s.current_hp > 0),
-      );
+      setSubjects((prev) => {
+        const remaining = prev.filter((s) => s.current_hp > 0);
+        if (prev.length > 0 && remaining.length === 0) {
+          setIsCleared(true);
+        }
+        return remaining;
+      });
       setSelectedSubjectId(null);
     }
   };
 
-  const selectedSubject = subjects.find((s) => s.id === selectedSubjectId);
+  const resetQuest = () => {
+    setSubjects([]);
+    setIsCleared(false);
+    setCurrentScreen("home");
+    setSelectedSubjectId(null);
+  };
 
   const hasAllBossesDefeated = () => {
-    return subjects.every((s) => s.current_hp <= 0);
+    return isCleared;
   };
 
   return {
@@ -193,5 +234,6 @@ export const useQuestLogic = () => {
     navigateTo,
     hasAllBossesDefeated,
     defeatedSubjects,
+    resetQuest,
   };
 };

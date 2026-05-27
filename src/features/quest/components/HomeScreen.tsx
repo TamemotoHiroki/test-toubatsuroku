@@ -19,6 +19,7 @@ interface Props {
   onNavigate: (screen: ScreenType, id?: string) => void;
   hasAllBossesDefeated: () => boolean;
   defeatedSubjects: DefeatedSubject[];
+  onResetQuest: () => void;
 }
 
 export const HomeScreen = ({
@@ -29,6 +30,7 @@ export const HomeScreen = ({
   onNavigate,
   hasAllBossesDefeated,
   defeatedSubjects,
+  onResetQuest,
 }: Props) => {
   const [tab, setTab] = useState<"bosses" | "cleared">("bosses");
 
@@ -61,19 +63,23 @@ export const HomeScreen = ({
               </div>
             )}
           </div>
+          <div className="mt-6">
+            <RetroButton
+              onClick={onResetQuest}
+              className="justify-center text-center"
+            >
+              あらたな冒険へ（周回する）
+            </RetroButton>
+          </div>
         </RetroWindow>
       ) : (
         <>
           <RetroWindow>
             <div className="flex gap-2 mb-4">
-              <RetroButton
-                onClick={() => setTab("bosses")}
-              >
+              <RetroButton onClick={() => setTab("bosses")}>
                 {tab === "bosses" ? "★" : "  "} 中ボス一覧
               </RetroButton>
-              <RetroButton
-                onClick={() => setTab("cleared")}
-              >
+              <RetroButton onClick={() => setTab("cleared")}>
                 {tab === "cleared" ? "★" : "  "} 戦績
               </RetroButton>
             </div>
@@ -120,14 +126,15 @@ export const HomeScreen = ({
               </div>
             )}
           </RetroWindow>
+
+          {/* 登録ボタンを未クリア時の分岐内（ここ）に移動 */}
+          <RetroWindow>
+            <RetroButton onClick={() => onNavigate("register")}>
+              新しき試練（科目）を登録する
+            </RetroButton>
+          </RetroWindow>
         </>
       )}
-
-      <RetroWindow>
-        <RetroButton onClick={() => onNavigate("register")}>
-          新しき試練（科目）を登録する
-        </RetroButton>
-      </RetroWindow>
     </div>
   );
 };
