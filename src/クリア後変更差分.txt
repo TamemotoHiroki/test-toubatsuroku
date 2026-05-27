@@ -1,0 +1,52 @@
+各ファイルにおける元のコードからの変更点と、その理由（Why）を解説する。
+
+### 1. `src/features/quest/hooks/useQuestLogic.ts` の差分
+
+* **`isCleared` ステートの追加**
+* **変更内容**: `useState<boolean>(false)` でクリア状態を管理するフラグを追加した。
+* **理由**: 「科目が0件」という条件だけでは、初期状態（科目未登録）と全クリ状態の区別がつかないため。明確なクリアフラグを持たせることで誤判定を防ぐ。
+
+
+* **`localStorage` の永続化対象を拡張**
+* **変更内容**: `StoredState` 型を定義し、保存・復元処理に `isCleared` と `defeatedSubjects` を含めた。
+* **理由**: ブラウザをリロードしても、クリア状態や「累積された戦績（周回仕様 3-B）」が消えないようにするため。
+
+
+* **`resetQuest` 関数の追加**
+* **変更内容**: `subjects` を空にし、`isCleared` を `false` に戻す関数を追加。
+* **理由**: 周回機能（仕様 1-A: レベル維持、仕様 2-B: 科目空スタート）を実現するため。`player` と `defeatedSubjects` はリセットせずそのまま残す。
+
+
+* **不正画面遷移のガード処理（`useEffect`）の追加**
+* **変更内容**: `currentScreen === "battle"` なのに `selectedSubjectId` が無い場合、強制的に `"home"` へ戻す `useEffect` を追加。
+* **理由**: 次に述べる `page.tsx` の無限ループバグを根本から防ぐため。ロジック（フック側）で安全性を担保する責務分離。
+
+
+
+### 2. `src/app/page.tsx` の差分
+
+* **レンダリング中の直接関数呼び出しの排除（無限ループ修正）**
+* **変更内容**:
+* 【旧】`questLogic.selectedSubject ? <BattleScreen /> : questLogic.navigateTo("home")`
+* 【新】`questLogic.currentScreen === "battle" && questLogic.selectedSubject && <BattleScreen />`
+
+
+* **理由**: Reactのレンダリングフェーズ（JSXを評価している最中）に `MapsTo`（State更新関数）を実行すると、「State更新 → 再レンダリング → 再びState更新…」という無限ループに陥りパソコンがフリーズする。論理積 (`&&`) による条件付きレンダリングに変更し、安全に表示のみを行うよう修正した。
+
+
+* **Props の追加**
+* **変更内容**: `<HomeScreen>` コンポーネントに `onResetQuest={questLogic.resetQuest}` を渡した。
+* **理由**: UI側からHooksの周回リセット処理を呼び出せるようにするため。
+
+
+
+### 3. `src/features/quest/components/HomeScreen.tsx` の差分
+
+* **「あらたな冒険へ（周回する）」ボタンの追加**
+* **変更内容**: `hasAllBossesDefeated()` が `true` になるクリア画面の末尾に、`onResetQuest` を発火させるボタンを追加。
+* **理由**: ユーザーが次の周回へ進むための明確なアクション（導線）を提供するため。
+
+
+* **「新しき試練（科目登録）」ボタンの配置変更**
+* **変更内容**: ルート直下にあった登録ボタンを、未クリア時（`hasAllBossesDefeated() === false` のブロック内）に移動させた。
+* **理由**: ゲームクリア画面の状態で敵（科目）を追加できてしまうと、クリア状態のまま敵が存在するという矛盾したステートになり、周回システムが破綻するため。未クリア時のみ登録可能にするのが正しい仕様。
