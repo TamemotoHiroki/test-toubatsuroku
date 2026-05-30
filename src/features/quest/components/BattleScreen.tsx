@@ -82,7 +82,7 @@ export const BattleScreen = ({ subject, onAttack, onCompleteTask, onBack }: Prop
     <div className="space-y-4">
       {/* 敵情報 */}
       <RetroWindow title={subject.title}>
-        <p className="text-xs opacity-50 mb-3">決戦: {subject.exam_date}</p>
+        <p className="text-xs opacity-50 mb-3">決戦の日: {subject.exam_date}</p>
         <RetroHpBar current={subject.current_hp} max={maxHp} />
       </RetroWindow>
 

@@ -137,7 +137,7 @@ export const HomeScreen = ({
                       className="border-l-2 pl-3 border-[#ffd700] py-1"
                     >
                       <p className="text-sm" style={{ color: "#ffd700" }}>{subject.title}</p>
-                      <p className="text-xs opacity-60 mt-1">決戦: {subject.exam_date}</p>
+                      <p className="text-xs opacity-60 mt-1">決戦の日: {subject.exam_date}</p>
                       <p className="text-xs opacity-60">
                         勉強時間: {subject.study_minutes} 分　タスク: {subject.tasks_cleared} 完了
                       </p>
