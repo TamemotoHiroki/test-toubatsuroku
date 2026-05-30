@@ -39,8 +39,11 @@ export const HomeScreen = ({
       {isCleared ? (
         /* クリア画面 */
         <RetroWindow title="GAME CLEAR">
-          <p className="text-center mb-6" style={{ color: "#ffd700" }}>
-            ★ すべての試練を のりこえた！ ★
+          <p className="text-center mb-2" style={{ color: "#ffd700" }}>
+            ★ テスト完全制覇！ ★
+          </p>
+          <p className="text-center text-sm opacity-70 mb-6">
+            単位は守られた。
           </p>
           {defeatedSubjects.length > 0 && (
             <div className="space-y-3">
@@ -97,6 +100,7 @@ export const HomeScreen = ({
                     const totalTasks = subject.tasks.length;
                     const pct = totalTasks > 0 ? subject.current_hp / (totalTasks * 100) : 0;
                     const hpColor = pct > 0.5 ? "#00ff00" : pct > 0.25 ? "#ffd700" : "#ff0000";
+                    const isOverdue = subject.exam_date < new Date().toISOString().slice(0, 10);
 
                     return (
                       <RetroButton
@@ -120,6 +124,11 @@ export const HomeScreen = ({
                               {subject.exam_date}
                             </span>
                           </div>
+                          {isOverdue && (
+                            <p className="text-xs mt-1" style={{ color: "#ff0000" }}>
+                              もう手遅れです。追試でお会いしましょう。
+                            </p>
+                          )}
                         </div>
                       </RetroButton>
                     );

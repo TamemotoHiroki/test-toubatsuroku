@@ -29,9 +29,18 @@ export default function QuestApp() {
           questLogic.selectedSubject && (
             <BattleScreen
               subject={questLogic.selectedSubject}
+              playerHp={questLogic.player.hp}
               onAttack={questLogic.attack}
               onCompleteTask={questLogic.completeTask}
+              onPlayerDamage={questLogic.playerTakeDamage}
+              onAddTask={questLogic.addTask}
+              onAddExp={questLogic.addExp}
+              onUpdateDefeatedStudyTime={questLogic.updateDefeatedStudyTime}
               onBack={() => questLogic.navigateTo("home")}
+              onGameOver={() => {
+                questLogic.restorePlayerHp();
+                questLogic.navigateTo("home");
+              }}
             />
           )}
 
