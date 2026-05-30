@@ -35,22 +35,18 @@ pnpm-debug.log*
 
 # vercel
 .vercel/
-.vercelnode_modules/
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
-<<<<<<< HEAD
-.vercelnode_modules/
-/.vercelnode_modules/
-
 # local backups / generated
 .backup_working_files/
 
-# optional: lockfiles and editors
+# editors
 .vscode/
 *.log
-.next/
-.backup_working_files/
-node_modules/
+
+# Claude Code
+CLAUDE.md
+.ai/
