@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Subject, Player, ScreenType, DefeatedSubject } from "../types";
-import { RetroWindow, RetroButton } from "./RetroUI";
+import { RetroWindow, RetroButton, RetroHpBar } from "./RetroUI";
 
 interface Props {
   subjects: Subject[];
@@ -27,106 +27,131 @@ export const HomeScreen = ({
 
   return (
     <div className="space-y-4">
-      <RetroWindow className="text-center">
-        <h1 className="mb-2 text-xl">期末テスト魔王</h1>
-        <p className="text-2xl">
-          HP: {totalBossHp} / {maxBossHp}
-        </p>
-        <div className="mt-4 pt-2 border-t border-white text-left text-sm">
-          勇者レベル: {player.level} (EXP: {player.exp})
+      {/* ボス HP パネル */}
+      <RetroWindow title="★ 期末テスト魔王 ★">
+        <RetroHpBar current={totalBossHp} max={maxBossHp} label="BOSS HP" />
+        <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center text-sm">
+          <span style={{ color: "#ffd700" }}>LV. {player.level}</span>
+          <span className="opacity-50">EXP {player.exp}</span>
         </div>
       </RetroWindow>
 
       {isCleared ? (
-        <RetroWindow className="text-center text-2xl">
-          <p className="mb-4">すべての試練を のりこえた！</p>
-          <div className="mt-6 pt-4 border-t border-white text-left">
-            <h2 className="mb-4 text-lg text-center">最終戦績</h2>
-            {defeatedSubjects.length > 0 && (
-              <div className="space-y-3 text-sm">
-                {defeatedSubjects.map((subject) => (
-                  <div key={subject.id} className="border-b border-white pb-2">
-                    <p className="font-bold">{subject.title}</p>
-                    <p>勉強時間: {subject.study_minutes} 分</p>
-                    <p>クリアしたタスク: {subject.tasks_cleared}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        /* クリア画面 */
+        <RetroWindow title="GAME CLEAR">
+          <p className="text-center mb-6" style={{ color: "#ffd700" }}>
+            ★ すべての試練を のりこえた！ ★
+          </p>
+          {defeatedSubjects.length > 0 && (
+            <div className="space-y-3">
+              {defeatedSubjects.map((subject) => (
+                <div key={subject.id} className="border-l-2 pl-3 border-[#ffd700]">
+                  <p style={{ color: "#ffd700" }} className="text-sm">{subject.title}</p>
+                  <p className="text-xs opacity-60 mt-1">
+                    勉強時間: {subject.study_minutes} 分　タスク: {subject.tasks_cleared} 完了
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="mt-6">
-            <RetroButton
-              onClick={onResetQuest}
-              className="justify-center text-center"
-            >
+            <RetroButton onClick={onResetQuest}>
               あらたな冒険へ（周回する）
             </RetroButton>
           </div>
         </RetroWindow>
       ) : (
         <>
+          {/* タブ切り替えパネル */}
           <RetroWindow>
-            <div className="flex gap-2 mb-4">
-              <RetroButton onClick={() => setTab("bosses")}>
-                {tab === "bosses" ? "★" : "  "} 中ボス一覧
-              </RetroButton>
-              <RetroButton onClick={() => setTab("cleared")}>
-                {tab === "cleared" ? "★" : "  "} 戦績
-              </RetroButton>
+            {/* タブ */}
+            <div className="flex border-b-2 border-white/30 mb-4 -mx-4 -mt-4 px-4">
+              <button
+                onClick={() => setTab("bosses")}
+                className={`px-4 py-2 font-mono text-sm border-r border-white/20 transition-colors ${
+                  tab === "bosses"
+                    ? "bg-white text-black"
+                    : "bg-black text-white hover:bg-white/10"
+                }`}
+              >
+                中ボス一覧
+              </button>
+              <button
+                onClick={() => setTab("cleared")}
+                className={`px-4 py-2 font-mono text-sm transition-colors ${
+                  tab === "cleared"
+                    ? "bg-white text-black"
+                    : "bg-black text-white hover:bg-white/10"
+                }`}
+              >
+                戦績
+              </button>
             </div>
 
             {tab === "bosses" ? (
-              <div>
-                <h2 className="mb-4 text-lg">中ボス一覧（科目）</h2>
-                <div className="space-y-2">
-                  {subjects.length === 0 ? (
-                    <p>平和な世界だ...</p>
-                  ) : (
-                    subjects.map((subject) => {
-                      const totalTasks = subject.tasks.length;
+              <div className="space-y-2">
+                {subjects.length === 0 ? (
+                  <p className="text-sm opacity-50 py-4 text-center">平和な世界だ...</p>
+                ) : (
+                  subjects.map((subject) => {
+                    const totalTasks = subject.tasks.length;
+                    const pct = totalTasks > 0 ? subject.current_hp / (totalTasks * 100) : 0;
+                    const hpColor = pct > 0.5 ? "#00ff00" : pct > 0.25 ? "#ffd700" : "#ff0000";
 
-                      return (
-                        <RetroButton
-                          key={subject.id}
-                          onClick={() => onNavigate("battle", subject.id)}
-                        >
-                          {subject.title} [HP {subject.current_hp}/{totalTasks * 100}] 決戦の日: {subject.exam_date}
-                        </RetroButton>
-                      );
-                    })
-                  )}
-                </div>
+                    return (
+                      <RetroButton
+                        key={subject.id}
+                        onClick={() => onNavigate("battle", subject.id)}
+                      >
+                        <div className="flex-1 min-w-0 py-1">
+                          <div className="text-sm">{subject.title}</div>
+                          <div className="flex items-center gap-3 mt-1">
+                            {/* ミニ HP バー */}
+                            <div className="w-20 h-2 border border-white/60 bg-black shrink-0">
+                              <div
+                                className="h-full"
+                                style={{ width: `${pct * 100}%`, backgroundColor: hpColor }}
+                              />
+                            </div>
+                            <span className="text-xs" style={{ color: hpColor }}>
+                              {subject.current_hp}/{totalTasks * 100}
+                            </span>
+                            <span className="text-xs opacity-50">
+                              {subject.exam_date}
+                            </span>
+                          </div>
+                        </div>
+                      </RetroButton>
+                    );
+                  })
+                )}
               </div>
             ) : (
-              <div>
-                <h2 className="mb-4 text-lg">戦績一覧</h2>
+              <div className="space-y-3">
                 {defeatedSubjects.length === 0 ? (
-                  <p>
-                    まだ試練を クリアしていない
-                    <span className="inline-block ml-4">...</span>
-                  </p>
+                  <p className="text-sm opacity-50 py-4 text-center">まだ試練をクリアしていない...</p>
                 ) : (
-                  <div className="space-y-3">
-                    {defeatedSubjects.map((subject) => (
-                      <div
-                        key={subject.id}
-                        className="border-b border-white pb-3 text-sm"
-                      >
-                        <p className="font-bold text-lg">{subject.title}</p>
-                        <p>決戦: {subject.exam_date}</p>
-                        <p>勉強時間: {subject.study_minutes} 分</p>
-                        <p>クリアしたタスク: {subject.tasks_cleared}</p>
-                      </div>
-                    ))}
-                  </div>
+                  defeatedSubjects.map((subject) => (
+                    <div
+                      key={subject.id}
+                      className="border-l-2 pl-3 border-[#ffd700] py-1"
+                    >
+                      <p className="text-sm" style={{ color: "#ffd700" }}>{subject.title}</p>
+                      <p className="text-xs opacity-60 mt-1">決戦: {subject.exam_date}</p>
+                      <p className="text-xs opacity-60">
+                        勉強時間: {subject.study_minutes} 分　タスク: {subject.tasks_cleared} 完了
+                      </p>
+                    </div>
+                  ))
                 )}
               </div>
             )}
           </RetroWindow>
 
+          {/* 科目登録 */}
           <RetroWindow>
             <RetroButton onClick={() => onNavigate("register")}>
-              新しき試練（科目）を登録する
+              ＋ 新しき試練（科目）を登録する
             </RetroButton>
           </RetroWindow>
         </>
