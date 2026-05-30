@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Subject, Player, ScreenType, DefeatedSubject } from "../types";
 import { RetroWindow, RetroButton, RetroHpBar } from "./RetroUI";
 
@@ -24,6 +24,15 @@ export const HomeScreen = ({
   onResetQuest,
 }: Props) => {
   const [tab, setTab] = useState<"bosses" | "cleared">("bosses");
+
+  const clearPlayedRef = useRef(false);
+  useEffect(() => {
+    if (isCleared && !clearPlayedRef.current) {
+      clearPlayedRef.current = true;
+      new Audio("/se/clear.wav").play().catch(() => {});
+    }
+    if (!isCleared) clearPlayedRef.current = false;
+  }, [isCleared]);
 
   return (
     <div className="space-y-4">

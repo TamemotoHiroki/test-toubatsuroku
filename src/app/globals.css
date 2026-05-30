@@ -25,3 +25,9 @@ body {
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;
 }
+
+/* @theme inline はビルド時評価のため実行時変数を上書き */
+.font-mono,
+.font-sans {
+  font-family: var(--font-misaki), monospace;
+}

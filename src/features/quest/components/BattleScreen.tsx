@@ -60,9 +60,18 @@ export const BattleScreen = ({
       attack: new Audio("/se/attack.wav"),
       defeat: new Audio("/se/defeat.wav"),
       damage: new Audio("/se/damage.wav"),
+      gameover: new Audio("/se/gameover.wav"),
     };
   }, []);
-  const playSE = (key: "attack" | "defeat" | "damage") => {
+
+  const gameoverPlayedRef = useRef(false);
+  useEffect(() => {
+    if (playerHp <= 0 && !gameoverPlayedRef.current) {
+      gameoverPlayedRef.current = true;
+      playSE("gameover");
+    }
+  }, [playerHp]);
+  const playSE = (key: "attack" | "defeat" | "damage" | "gameover") => {
     const audio = seRef.current[key];
     if (!audio) return;
     audio.currentTime = 0;
@@ -170,7 +179,6 @@ export const BattleScreen = ({
   // タイマー稼働中にタスクをチェック → 即時攻撃
   const handleTimerTaskCheck = (taskId: string) => {
     if (timerCheckedTasks.has(taskId)) return;
-    playSE("attack");
     const result = onCompleteTask(subject.id, taskId);
 
     const newChecked = new Set([...timerCheckedTasks, taskId]);
@@ -192,6 +200,7 @@ export const BattleScreen = ({
       setIsDefeated(true);
       setIsAttacking(false);
     } else if (allDone) {
+      playSE("attack");
       clearTimerInterval();
       setTimerPhase("idle");
       onAddExp(min);
