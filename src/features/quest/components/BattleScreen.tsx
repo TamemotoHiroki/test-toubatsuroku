@@ -1,7 +1,7 @@
 // src/features/quest/components/BattleScreen.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Subject } from "../types";
-import { RetroWindow, RetroButton, RetroInput, RetroHpBar } from "./RetroUI";
+import { RetroWindow, RetroButton, RetroInput, RetroHpBar, RetroMessage, DamagePopup, GlitchImage } from "./RetroUI";
 
 type TimerPhase = "idle" | "running" | "paused";
 
@@ -39,6 +39,26 @@ export const BattleScreen = ({
   const [isAttacking, setIsAttacking] = useState(false);
   const [isDefeated, setIsDefeated] = useState(false);
   const [message, setMessage] = useState(`${subject.title} が あらわれた！`);
+  const [popups, setPopups] = useState<{ id: string; damage: number }[]>([]);
+  const [glitchMode, setGlitchMode] = useState<"idle" | "attack" | "defeat">("idle");
+  const [glitchTrigger, setGlitchTrigger] = useState(0);
+
+  const triggerAttackGlitch = () => {
+    setGlitchMode("attack");
+    setGlitchTrigger(t => t + 1);
+    setTimeout(() => setGlitchMode("idle"), 350);
+  };
+
+  const triggerDefeatGlitch = () => {
+    setGlitchMode("defeat");
+    setGlitchTrigger(t => t + 1);
+  };
+
+  const showDamagePopup = (damage: number) => {
+    const id = crypto.randomUUID();
+    setPopups(prev => [...prev, { id, damage }]);
+    setTimeout(() => setPopups(prev => prev.filter(p => p.id !== id)), 900);
+  };
 
   // ── タイマー状態 ────────────────────────────────────────
   const [timerPhase, setTimerPhase] = useState<TimerPhase>("idle");
@@ -166,6 +186,8 @@ export const BattleScreen = ({
 
     const min = pendingMinutesRef.current;
     if (result.isDefeated) {
+      if (result.damage > 0) showDamagePopup(result.damage);
+      triggerDefeatGlitch();
       clearTimerInterval();
       setTimerPhase("idle");
       onUpdateDefeatedStudyTime(subject.id, min);
@@ -174,13 +196,17 @@ export const BattleScreen = ({
       setIsDefeated(true);
       setIsAttacking(false);
     } else if (allDone) {
+      const totalDamage = newChecked.size * 100;
+      showDamagePopup(totalDamage);
+      triggerAttackGlitch();
       clearTimerInterval();
       setTimerPhase("idle");
       onAddExp(min);
-      const totalDamage = newChecked.size * 100;
       setMessage(`ゆうしゃのこうげき！\n${totalDamage} のダメージ！`);
       setIsAttacking(false);
     } else if (result.damage > 0) {
+      showDamagePopup(result.damage);
+      triggerAttackGlitch();
       setMessage(`ゆうしゃのこうげき！\n${result.damage} のダメージ！`);
     }
   };
@@ -216,25 +242,32 @@ export const BattleScreen = ({
   // ── バトル画面 ───────────────────────────────────────────
   return (
     <div className="space-y-4">
-      {/* 敵情報 */}
-      <RetroWindow title={subject.title}>
-        <p className="text-xs opacity-50 mb-3">決戦の日: {subject.exam_date}</p>
-        <RetroHpBar current={subject.current_hp} max={maxHp} />
-      </RetroWindow>
+      {/* 敵情報 + ダメージポップアップ */}
+      <div className="relative">
+        <RetroWindow title={subject.title}>
+          <p className="text-xs opacity-50 mb-3">決戦の日: {subject.exam_date}</p>
+          <RetroHpBar current={subject.current_hp} max={maxHp} />
+        </RetroWindow>
+        <div className="absolute top-2 right-4 flex flex-col items-end gap-1 pointer-events-none">
+          {popups.map(p => (
+            <DamagePopup key={p.id} value={p.damage} />
+          ))}
+        </div>
+      </div>
 
       {/* モンスター画像 */}
-      <RetroWindow>
-        <div className="flex items-center justify-center min-h-[220px]">
-          {!isDefeated && subject.imageUrl && (
-            <img
+      {subject.imageUrl && (
+        <RetroWindow>
+          <div className="flex items-end justify-center h-[220px] overflow-hidden">
+            <GlitchImage
               src={subject.imageUrl}
               alt={subject.title}
-              className="h-64 w-64 object-contain"
-              style={{ imageRendering: "pixelated" }}
+              glitchMode={glitchMode}
+              glitchTrigger={glitchTrigger}
             />
-          )}
-        </div>
-      </RetroWindow>
+          </div>
+        </RetroWindow>
+      )}
 
       {/* 攻撃画面 / メッセージ */}
       {isAttacking ? (
@@ -382,16 +415,16 @@ export const BattleScreen = ({
 
       ) : isDefeated ? (
         <div className="space-y-4">
-          <RetroWindow className="min-h-[80px] whitespace-pre-wrap text-sm leading-relaxed">
-            {message}
+          <RetroWindow className="min-h-[80px]">
+            <RetroMessage>{message}</RetroMessage>
           </RetroWindow>
           <RetroButton onClick={onBack} className="w-full">つづける</RetroButton>
         </div>
 
       ) : (
         <div className="flex gap-4">
-          <RetroWindow className="flex-1 min-h-[80px] whitespace-pre-wrap text-sm leading-relaxed">
-            {message}
+          <RetroWindow className="flex-1 min-h-[80px]">
+            <RetroMessage>{message}</RetroMessage>
           </RetroWindow>
           <div className="flex flex-col gap-2 w-28 shrink-0">
             <RetroButton onClick={() => setIsAttacking(true)}>たたかう</RetroButton>

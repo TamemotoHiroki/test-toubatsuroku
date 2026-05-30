@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Subject, Player, ScreenType, DefeatedSubject } from "../types";
-import { RetroWindow, RetroButton, RetroHpBar } from "./RetroUI";
+import { RetroWindow, RetroButton, RetroHpBar, RetroTab, Confetti } from "./RetroUI";
 
 interface Props {
   subjects: Subject[];
@@ -38,57 +38,56 @@ export const HomeScreen = ({
 
       {isCleared ? (
         /* クリア画面 */
-        <RetroWindow title="GAME CLEAR">
-          <p className="text-center mb-2" style={{ color: "#ffd700" }}>
-            ★ テスト完全制覇！ ★
-          </p>
-          <p className="text-center text-sm opacity-70 mb-6">
-            単位は守られた。
-          </p>
-          {defeatedSubjects.length > 0 && (
-            <div className="space-y-3">
-              {defeatedSubjects.map((subject) => (
-                <div key={subject.id} className="border-l-2 pl-3 border-[#ffd700]">
-                  <p style={{ color: "#ffd700" }} className="text-sm">{subject.title}</p>
-                  <p className="text-xs opacity-60 mt-1">
-                    勉強時間: {subject.study_minutes} 分　タスク: {subject.tasks_cleared} 完了
-                  </p>
+        <>
+          <Confetti />
+          <div style={{ animation: "clearSlideUp 0.5s ease-out forwards" }}>
+            <RetroWindow title="★ GAME CLEAR ★" className="border-[#ffd700]">
+              <p
+                className="text-center text-lg mb-1 font-bold"
+                style={{ color: "#ffd700", textShadow: "0 0 12px #ffd700" }}
+              >
+                テスト完全制覇！
+              </p>
+              <p className="text-center text-sm opacity-70 mb-6">単位は守られた。</p>
+              {defeatedSubjects.length > 0 && (
+                <div className="space-y-3">
+                  {defeatedSubjects.map((subject) => (
+                    <div key={subject.id} className="border-l-2 pl-3 border-[#ffd700]">
+                      <p style={{ color: "#ffd700" }} className="text-sm">{subject.title}</p>
+                      <p className="text-xs opacity-60 mt-1">
+                        勉強時間: {subject.study_minutes} 分　タスク: {subject.tasks_cleared} 完了
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-          <div className="mt-6">
-            <RetroButton onClick={onResetQuest}>
-              あらたな冒険へ（周回する）
-            </RetroButton>
+              )}
+              <div className="mt-6">
+                <RetroButton onClick={onResetQuest}>
+                  あらたな冒険へ（周回する）
+                </RetroButton>
+              </div>
+            </RetroWindow>
           </div>
-        </RetroWindow>
+        </>
       ) : (
         <>
           {/* タブ切り替えパネル */}
           <RetroWindow>
             {/* タブ */}
             <div className="flex border-b-2 border-white/30 mb-4 -mx-4 -mt-4 px-4">
-              <button
+              <RetroTab
                 onClick={() => setTab("bosses")}
-                className={`px-4 py-2 font-mono text-sm border-r border-white/20 transition-colors ${
-                  tab === "bosses"
-                    ? "bg-white text-black"
-                    : "bg-black text-white hover:bg-white/10"
-                }`}
+                isActive={tab === "bosses"}
+                hasBorderRight
               >
                 中ボス一覧
-              </button>
-              <button
+              </RetroTab>
+              <RetroTab
                 onClick={() => setTab("cleared")}
-                className={`px-4 py-2 font-mono text-sm transition-colors ${
-                  tab === "cleared"
-                    ? "bg-white text-black"
-                    : "bg-black text-white hover:bg-white/10"
-                }`}
+                isActive={tab === "cleared"}
               >
                 戦績
-              </button>
+              </RetroTab>
             </div>
 
             {tab === "bosses" ? (
@@ -111,7 +110,7 @@ export const HomeScreen = ({
                           <div className="text-sm">{subject.title}</div>
                           <div className="flex items-center gap-3 mt-1">
                             {/* ミニ HP バー */}
-                            <div className="w-20 h-2 border border-white/60 bg-black shrink-0">
+                            <div className="w-20 h-2 border border-white/60 bg-[#000020] shrink-0">
                               <div
                                 className="h-full"
                                 style={{ width: `${pct * 100}%`, backgroundColor: hpColor }}
