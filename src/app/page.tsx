@@ -10,7 +10,7 @@ export default function QuestApp() {
   const questLogic = useQuestLogic();
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-neutral-900">
+    <div className="flex items-center justify-center min-h-screen p-4 bg-[#0a0a0a]">
       <div className="w-full max-w-2xl min-h-[600px] p-6 bg-black">
         {questLogic.currentScreen === "home" && (
           <HomeScreen
@@ -29,9 +29,18 @@ export default function QuestApp() {
           questLogic.selectedSubject && (
             <BattleScreen
               subject={questLogic.selectedSubject}
+              playerHp={questLogic.player.hp}
               onAttack={questLogic.attack}
               onCompleteTask={questLogic.completeTask}
+              onPlayerDamage={questLogic.playerTakeDamage}
+              onAddTask={questLogic.addTask}
+              onAddExp={questLogic.addExp}
+              onUpdateDefeatedStudyTime={questLogic.updateDefeatedStudyTime}
               onBack={() => questLogic.navigateTo("home")}
+              onGameOver={() => {
+                questLogic.restorePlayerHp();
+                questLogic.navigateTo("home");
+              }}
             />
           )}
 
