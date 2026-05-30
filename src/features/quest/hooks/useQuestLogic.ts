@@ -206,6 +206,7 @@ export const useQuestLogic = () => {
 
   const addSubject = (subject: Omit<Subject, "id" | "current_hp">) => {
     const monsterImages = [
+      "/monsters/0.png",
       "/monsters/1.png",
       "/monsters/2.png",
       "/monsters/3.png",
