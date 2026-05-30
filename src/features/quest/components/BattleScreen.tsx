@@ -54,6 +54,21 @@ export const BattleScreen = ({
   // タスク追加フォーム
   const [newTaskInput, setNewTaskInput] = useState("");
 
+  const seRef = useRef<Record<string, HTMLAudioElement>>({});
+  useEffect(() => {
+    seRef.current = {
+      attack: new Audio("/se/attack.wav"),
+      defeat: new Audio("/se/defeat.wav"),
+      damage: new Audio("/se/damage.wav"),
+    };
+  }, []);
+  const playSE = (key: "attack" | "defeat" | "damage") => {
+    const audio = seRef.current[key];
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  };
+
   // ── Refs ────────────────────────────────────────────────
   const timerRef = useRef<number | null>(null);
   const timerPhaseRef = useRef<TimerPhase>("idle");
@@ -74,6 +89,7 @@ export const BattleScreen = ({
     // 未チェックのタスク → プレイヤーダメージ
     const unchecked = pending.filter((id) => !checked.has(id));
     if (unchecked.length > 0) {
+      playSE("damage");
       const dmg = unchecked.length * 50 * subject.importance;
       onPlayerDamage(dmg);
       setMessage(`じかんきれ！ てきのこうげき！\n-${dmg} ダメージ！`);
@@ -154,6 +170,7 @@ export const BattleScreen = ({
   // タイマー稼働中にタスクをチェック → 即時攻撃
   const handleTimerTaskCheck = (taskId: string) => {
     if (timerCheckedTasks.has(taskId)) return;
+    playSE("attack");
     const result = onCompleteTask(subject.id, taskId);
 
     const newChecked = new Set([...timerCheckedTasks, taskId]);
@@ -166,6 +183,7 @@ export const BattleScreen = ({
 
     const min = pendingMinutesRef.current;
     if (result.isDefeated) {
+      playSE("defeat");
       clearTimerInterval();
       setTimerPhase("idle");
       onUpdateDefeatedStudyTime(subject.id, min);
