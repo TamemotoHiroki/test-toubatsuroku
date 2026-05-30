@@ -18,16 +18,18 @@ export const RegisterScreen = ({ onRegister, onBack }: Props) => {
   const addTask = () => {
     const trimmedTitle = taskTitle.trim();
     if (!trimmedTitle) return;
-
     setTasks((prev) => [
       ...prev,
-      {
-        id: crypto.randomUUID(),
-        title: trimmedTitle,
-        isDone: false,
-      },
+      { id: crypto.randomUUID(), title: trimmedTitle, isDone: false },
     ]);
     setTaskTitle("");
+  };
+
+  const handleTaskKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addTask();
+    }
   };
 
   const removeTask = (taskId: string) => {
@@ -37,7 +39,6 @@ export const RegisterScreen = ({ onRegister, onBack }: Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !date || tasks.length === 0) return;
-
     onRegister({
       title,
       exam_date: date,
@@ -48,83 +49,93 @@ export const RegisterScreen = ({ onRegister, onBack }: Props) => {
 
   return (
     <div className="space-y-4">
-      <RetroWindow>
-        <h2 className="mb-4 text-lg">ふっかつのじゅもん（科目登録）</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <RetroWindow title="ふっかつのじゅもん（科目登録）">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* 科目名 */}
           <div>
-            <label className="block mb-1 text-sm">科目のなまえ</label>
+            <label className="block mb-1 text-xs opacity-60">科目のなまえ</label>
             <RetroInput
               value={title}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setTitle(e.target.value)
-              }
+              onChange={(e) => setTitle(e.target.value)}
               placeholder="例: 微積分"
               required
             />
           </div>
+
+          {/* 日付 */}
           <div>
-            <label className="block mb-1 text-sm">決戦の日</label>
+            <label className="block mb-1 text-xs opacity-60">決戦の日</label>
             <RetroInput
               type="date"
               value={date}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setDate(e.target.value)
-              }
+              onChange={(e) => setDate(e.target.value)}
               required
             />
           </div>
+
+          {/* 重要度 */}
           <div>
-            <label className="block mb-1 text-sm">重要度 (1-5)</label>
+            <label className="block mb-1 text-xs opacity-60">重要度 (1〜5)</label>
             <RetroSelect
               value={importance}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setImportance(e.target.value)
-              }
+              onChange={(e) => setImportance(e.target.value)}
             >
               {[1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n} className="bg-black text-white">
-                  {n}
+                  {"★".repeat(n)}{"☆".repeat(5 - n)}　{n}
                 </option>
               ))}
             </RetroSelect>
           </div>
 
-          <div className="space-y-3 pt-2 border-t border-white/30">
-            <label className="block mb-1 text-sm">タスクを追加</label>
+          {/* タスク追加 */}
+          <div className="border-t border-white/20 pt-4 space-y-3">
+            <p className="text-xs opacity-60">タスクを追加（Enter または「追加」）</p>
             <div className="flex gap-2">
               <RetroInput
                 value={taskTitle}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setTaskTitle(e.target.value)
-                }
-                placeholder="例: 微分の練習問題 1"
+                onChange={(e) => setTaskTitle(e.target.value)}
+                onKeyDown={handleTaskKeyDown}
+                placeholder="例: 微分の練習問題"
               />
               <RetroButton type="button" onClick={addTask}>
                 追加
               </RetroButton>
             </div>
 
-            <div className="space-y-2">
-              {tasks.length === 0 ? (
-                <p className="text-sm opacity-80">まだタスクがない。1件以上追加してから登録する。</p>
-              ) : (
-                tasks.map((task) => (
+            {tasks.length === 0 ? (
+              <p className="text-xs opacity-40 py-2 text-center border border-white/10">
+                まだタスクがありません
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {tasks.map((task, index) => (
                   <div
                     key={task.id}
-                    className="flex items-center justify-between gap-3 border border-white/30 px-3 py-2"
+                    className="flex items-center gap-3 border-l-2 border-[#ffd700] pl-3 py-1 pr-2"
                   >
-                    <span>{task.title}</span>
-                    <RetroButton type="button" onClick={() => removeTask(task.id)}>
-                      削除
-                    </RetroButton>
+                    <span className="text-xs opacity-40 shrink-0 w-5 text-right">
+                      {index + 1}.
+                    </span>
+                    <span className="flex-1 text-sm">{task.title}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeTask(task.id)}
+                      className="text-xs opacity-40 hover:opacity-100 hover:text-[#ff0000] transition-colors shrink-0"
+                    >
+                      ✕
+                    </button>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex gap-4 mt-6">
-            <RetroButton type="submit">登録する</RetroButton>
+          {/* 送信 */}
+          <div className="flex gap-3 pt-1 border-t border-white/20">
+            <RetroButton type="submit" disabled={!title || !date || tasks.length === 0}>
+              登録する
+            </RetroButton>
             <RetroButton type="button" onClick={onBack}>
               もどる
             </RetroButton>
