@@ -65,7 +65,7 @@ export const BattleScreen = ({ subject, onAttack, onCompleteTask, onBack }: Prop
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr] items-start">
+      <div className="flex flex-col gap-4">
         <RetroWindow className="flex flex-col gap-2">
           <p>{subject.title}</p>
           <p>決戦: {subject.exam_date}</p>
@@ -77,7 +77,7 @@ export const BattleScreen = ({ subject, onAttack, onCompleteTask, onBack }: Prop
             <img
               src={subject.imageUrl}
               alt={subject.title}
-              className="h-48 w-48 object-contain"
+              className="h-64 w-64 object-contain"
             />
           )}
         </RetroWindow>
