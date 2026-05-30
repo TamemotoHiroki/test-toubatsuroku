@@ -120,7 +120,7 @@ interface StoredState {
 
 export const useQuestLogic = () => {
   const [subjects, setSubjects] = useState<Subject[]>(INITIAL_SUBJECTS);
-  const [player, setPlayer] = useState<Player>({ level: 1, exp: 0 });
+  const [player, setPlayer] = useState<Player>({ level: 1, exp: 0, hp: 100 });
   const [currentScreen, setCurrentScreen] = useState<ScreenType>("home");
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [isCleared, setIsCleared] = useState<boolean>(false);
@@ -136,7 +136,7 @@ export const useQuestLogic = () => {
       const parsed = JSON.parse(raw) as Partial<StoredState>;
       if (parsed?.version === 1) {
         if (Array.isArray(parsed.subjects)) setSubjects(normalizeSubjects(parsed.subjects));
-        if (parsed.player) setPlayer(parsed.player);
+        if (parsed.player) setPlayer({ hp: 100, ...parsed.player });
         if (parsed.currentScreen) setCurrentScreen(parsed.currentScreen);
         if (parsed.selectedSubjectId !== undefined)
           setSelectedSubjectId(parsed.selectedSubjectId);
@@ -298,10 +298,44 @@ export const useQuestLogic = () => {
 
     setPlayer((prev) => {
       const newExp = prev.exp + studyMinutes;
-      return { level: Math.floor(newExp / 100) + 1, exp: newExp };
+      return { level: Math.floor(newExp / 100) + 1, exp: newExp, hp: prev.hp };
     });
 
     return { damage, isDefeated };
+  };
+
+  const playerTakeDamage = (damage: number) => {
+    setPlayer((prev) => ({ ...prev, hp: Math.max(0, prev.hp - damage) }));
+  };
+
+  const restorePlayerHp = () => {
+    setPlayer((prev) => ({ ...prev, hp: 100 }));
+  };
+
+  const addExp = (minutes: number) => {
+    if (minutes <= 0) return;
+    setPlayer((prev) => {
+      const newExp = prev.exp + minutes;
+      return { ...prev, exp: newExp, level: Math.floor(newExp / 100) + 1 };
+    });
+  };
+
+  const updateDefeatedStudyTime = (subjectId: string, minutes: number) => {
+    setDefeatedSubjects((prev) =>
+      prev.map((s) => (s.id === subjectId ? { ...s, study_minutes: minutes } : s)),
+    );
+  };
+
+  const addTask = (subjectId: string, title: string): string => {
+    const newTask: Task = { id: crypto.randomUUID(), title, isDone: false };
+    setSubjects((prev) =>
+      prev.map((s) =>
+        s.id === subjectId
+          ? { ...s, tasks: [...s.tasks, newTask], current_hp: s.current_hp + 100 }
+          : s,
+      ),
+    );
+    return newTask.id;
   };
 
   const navigateTo = (screen: ScreenType, subjectId?: string) => {
@@ -333,8 +367,13 @@ export const useQuestLogic = () => {
     maxBossHp,
     selectedSubject,
     addSubject,
+    addTask,
     completeTask,
     attack,
+    playerTakeDamage,
+    restorePlayerHp,
+    addExp,
+    updateDefeatedStudyTime,
     navigateTo,
     defeatedSubjects,
     resetQuest,
