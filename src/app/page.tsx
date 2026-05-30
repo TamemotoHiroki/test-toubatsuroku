@@ -1,7 +1,6 @@
 // src/app/page.tsx
 "use client";
 
-import React from "react";
 import { useQuestLogic } from "../features/quest/hooks/useQuestLogic";
 import { HomeScreen } from "../features/quest/components/HomeScreen";
 import { BattleScreen } from "../features/quest/components/BattleScreen";
@@ -20,7 +19,7 @@ export default function QuestApp() {
             maxBossHp={questLogic.maxBossHp}
             player={questLogic.player}
             onNavigate={questLogic.navigateTo}
-            hasAllBossesDefeated={questLogic.hasAllBossesDefeated}
+            isCleared={questLogic.isCleared}
             defeatedSubjects={questLogic.defeatedSubjects}
             onResetQuest={questLogic.resetQuest}
           />
@@ -31,6 +30,7 @@ export default function QuestApp() {
             <BattleScreen
               subject={questLogic.selectedSubject}
               onAttack={questLogic.attack}
+              onCompleteTask={questLogic.completeTask}
               onBack={() => questLogic.navigateTo("home")}
             />
           )}

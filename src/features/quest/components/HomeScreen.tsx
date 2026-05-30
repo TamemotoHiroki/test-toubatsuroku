@@ -1,15 +1,6 @@
-// src/features/quest/components/HomeScreen.tsx
 import React, { useState } from "react";
-import { Subject, Player, ScreenType } from "../types";
+import { Subject, Player, ScreenType, DefeatedSubject } from "../types";
 import { RetroWindow, RetroButton } from "./RetroUI";
-
-interface DefeatedSubject {
-  id: string;
-  title: string;
-  exam_date: string;
-  study_minutes: number;
-  tasks_cleared: number;
-}
 
 interface Props {
   subjects: Subject[];
@@ -17,7 +8,7 @@ interface Props {
   maxBossHp: number;
   player: Player;
   onNavigate: (screen: ScreenType, id?: string) => void;
-  hasAllBossesDefeated: () => boolean;
+  isCleared: boolean;
   defeatedSubjects: DefeatedSubject[];
   onResetQuest: () => void;
 }
@@ -28,7 +19,7 @@ export const HomeScreen = ({
   maxBossHp,
   player,
   onNavigate,
-  hasAllBossesDefeated,
+  isCleared,
   defeatedSubjects,
   onResetQuest,
 }: Props) => {
@@ -46,7 +37,7 @@ export const HomeScreen = ({
         </div>
       </RetroWindow>
 
-      {hasAllBossesDefeated() ? (
+      {isCleared ? (
         <RetroWindow className="text-center text-2xl">
           <p className="mb-4">すべての試練を のりこえた！</p>
           <div className="mt-6 pt-4 border-t border-white text-left">
@@ -91,15 +82,18 @@ export const HomeScreen = ({
                   {subjects.length === 0 ? (
                     <p>平和な世界だ...</p>
                   ) : (
-                    subjects.map((subject) => (
-                      <RetroButton
-                        key={subject.id}
-                        onClick={() => onNavigate("battle", subject.id)}
-                      >
-                        {subject.title} [HP {subject.current_hp}/
-                        {subject.total_tasks * 100}] 決戦: {subject.exam_date}
-                      </RetroButton>
-                    ))
+                    subjects.map((subject) => {
+                      const totalTasks = subject.tasks.length;
+
+                      return (
+                        <RetroButton
+                          key={subject.id}
+                          onClick={() => onNavigate("battle", subject.id)}
+                        >
+                          {subject.title} [HP {subject.current_hp}/{totalTasks * 100}] 決戦の日: {subject.exam_date}
+                        </RetroButton>
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -107,7 +101,10 @@ export const HomeScreen = ({
               <div>
                 <h2 className="mb-4 text-lg">戦績一覧</h2>
                 {defeatedSubjects.length === 0 ? (
-                  <p>まだ試練を クリアしていない...</p>
+                  <p>
+                    まだ試練を クリアしていない
+                    <span className="inline-block ml-4">...</span>
+                  </p>
                 ) : (
                   <div className="space-y-3">
                     {defeatedSubjects.map((subject) => (
@@ -127,7 +124,6 @@ export const HomeScreen = ({
             )}
           </RetroWindow>
 
-          {/* 登録ボタンを未クリア時の分岐内（ここ）に移動 */}
           <RetroWindow>
             <RetroButton onClick={() => onNavigate("register")}>
               新しき試練（科目）を登録する
