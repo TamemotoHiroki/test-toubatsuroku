@@ -18,6 +18,7 @@ export interface Subject {
 export interface Player {
   level: number;
   exp: number;
+  hp: number;
 }
 
 export interface DefeatedSubject {
