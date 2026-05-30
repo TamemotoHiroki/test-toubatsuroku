@@ -56,8 +56,8 @@ export const BattleScreen = ({ subject, onAttack, onCompleteTask, onBack }: Prop
     const damageText = `${nextTurnCompletedTasks * 100} の ダメージ！`;
 
     if (result.isDefeated) {
-      setMessage(`${subject.title} を たおした！\n${subject.title} に ${damageText}`);
-      setIsDefeated(true);
+      // 倒した状態だが、画面上で確定して消えるのは「きめる」押下時にする
+      setMessage(`${subject.title} に ${damageText}\n（倒した：確定するには「きめる」を押してください）`);
     } else {
       setMessage(`ゆうしゃ の こうげき！\n${subject.title} に ${damageText}`);
     }
