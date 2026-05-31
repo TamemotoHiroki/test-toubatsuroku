@@ -57,16 +57,9 @@ export const BattleScreen = ({
 
   const { playDecide, playCancel } = useButtonSE();
 
-  const seRef = useRef<Record<string, HTMLAudioElement>>({});
-  useEffect(() => {
-    seRef.current = {
-      check:    new Audio("/se/check.wav"),
-      attack:   new Audio("/se/attack.wav"),
-      defeat:   new Audio("/se/defeat.wav"),
-      damage:   new Audio("/se/damage.wav"),
-      gameover: new Audio("/se/gameover.wav"),
-    };
-  }, []);
+  const playSE = (src: string) => {
+    new Audio(src).play().catch(() => {});
+  };
 
   const gameoverPlayedRef = useRef(false);
   const gameoverMessageRef = useRef("");
@@ -75,17 +68,10 @@ export const BattleScreen = ({
     if (playerHp <= 0 && !gameoverPlayedRef.current) {
       gameoverPlayedRef.current = true;
       gameoverMessageRef.current = GAMEOVER_MESSAGES[Math.floor(Math.random() * GAMEOVER_MESSAGES.length)];
-      playSE("gameover");
+      playSE("/se/gameover.wav");
       setTimeout(() => setGameoverMessageVisible(true), 700);
     }
   }, [playerHp]);
-
-  const playSE = (key: "check" | "attack" | "defeat" | "damage" | "gameover") => {
-    const audio = seRef.current[key];
-    if (!audio) return;
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
-  };
 
   const triggerAttackGlitch = () => {
     setGlitchMode("attack");
@@ -142,7 +128,7 @@ export const BattleScreen = ({
     if (unchecked.length > 0) {
       const dmg = unchecked.length * 50 * subject.importance;
       onPlayerDamage(dmg);
-      playSE("damage");
+      playSE("/se/damage.wav");
       setMessage(`じかんきれ！ てきのこうげき！\n-${dmg} ダメージ！`);
     }
 
@@ -224,7 +210,7 @@ export const BattleScreen = ({
   // タイマー稼働中のチェック → やった印のみ（ダメージなし）
   const handleTimerTaskToggle = (taskId: string) => {
     if (subject.tasks.find(t => t.id === taskId)?.isDone) return;
-    playSE("check");
+    playSE("/se/check.wav");
     setTimerCheckedTasks(prev => {
       const next = new Set(prev);
       if (next.has(taskId)) next.delete(taskId); else next.add(taskId);
@@ -245,7 +231,7 @@ export const BattleScreen = ({
     showDamagePopup(totalDamage);
 
     if (defeated) {
-      playSE("defeat");
+      playSE("/se/defeat.wav");
       triggerDefeatGlitch();
       clearTimerInterval();
       setTimerPhase("idle");
@@ -255,7 +241,7 @@ export const BattleScreen = ({
       setIsDefeated(true);
       setIsAttacking(false);
     } else {
-      playSE("attack");
+      playSE("/se/attack.wav");
       triggerAttackGlitch();
       clearTimerInterval();
       setTimerPhase("idle");
