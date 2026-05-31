@@ -100,6 +100,7 @@ export const BattleScreen = ({
 
   // セットアップ時の選択タスク
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  const [taskError, setTaskError] = useState(false);
 
   // タイマー稼働中にチェックされたタスク
   const [timerCheckedTasks, setTimerCheckedTasks] = useState<Set<string>>(new Set());
@@ -168,6 +169,7 @@ export const BattleScreen = ({
 
   // ── ハンドラ ─────────────────────────────────────────────
   const handleToggleTask = (taskId: string) => {
+    setTaskError(false);
     setSelectedTasks((prev) => {
       const next = new Set(prev);
       if (next.has(taskId)) next.delete(taskId); else next.add(taskId);
@@ -184,6 +186,12 @@ export const BattleScreen = ({
     pendingMinutesRef.current = Math.floor(totalSeconds / 60);
     // isDone済みのタスクは除外（別ターン完了分を混入させない）
     const nonDoneIds = new Set(subject.tasks.filter((t) => !t.isDone).map((t) => t.id));
+    // 未完了タスクがあるのに何も選択していない場合はエラー
+    if (nonDoneIds.size > 0 && selectedTasks.size === 0) {
+      setTaskError(true);
+      return;
+    }
+    setTaskError(false);
     pendingTasksRef.current =
       selectedTasks.size > 0
         ? Array.from(selectedTasks).filter((id) => nonDoneIds.has(id))
@@ -411,6 +419,11 @@ export const BattleScreen = ({
                 </div>
               </div>
 
+              {taskError && (
+                <p className="text-xs text-center pt-1" style={{ color: "#ff6666" }}>
+                  タスクを選んでください
+                </p>
+              )}
               <div className="flex gap-2 pt-1">
                 <RetroButton onClick={() => { playCancel(); handleCancelAttack(); }}>やめる</RetroButton>
                 <RetroButton
