@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Subject } from "../types";
 import { RetroWindow, RetroButton, RetroInput, RetroHpBar, RetroMessage, DamagePopup, GlitchImage } from "./RetroUI";
 import { useButtonSE } from "../hooks/useButtonSE";
-import { useBGM } from "../hooks/useBGM";
 
 type TimerPhase = "idle" | "running" | "paused";
 
@@ -57,12 +56,6 @@ export const BattleScreen = ({
   const [glitchTrigger, setGlitchTrigger] = useState(0);
 
   const { playDecide, playCancel } = useButtonSE();
-
-  const battleBgm =
-    subject.importance <= 2 ? "/bgm/battle_low.mp3" :
-    subject.importance <= 4 ? "/bgm/battle_mid.mp3" :
-    "/bgm/battle_high.mp3";
-  useBGM(playerHp > 0 ? battleBgm : "/bgm/gameover.mp3");
 
   const seRef = useRef<Record<string, HTMLAudioElement>>({});
   useEffect(() => {

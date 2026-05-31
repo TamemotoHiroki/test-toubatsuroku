@@ -6,6 +6,7 @@ import { useQuestLogic } from "../features/quest/hooks/useQuestLogic";
 import { HomeScreen } from "../features/quest/components/HomeScreen";
 import { BattleScreen } from "../features/quest/components/BattleScreen";
 import { RegisterScreen } from "../features/quest/components/RegisterScreen";
+import { useBGM } from "../features/quest/hooks/useBGM";
 import { ScreenType } from "../features/quest/types";
 
 const FADE_MS = 150;
@@ -13,6 +14,18 @@ const FADE_MS = 150;
 export default function QuestApp() {
   const questLogic = useQuestLogic();
   const [fading, setFading] = useState(false);
+
+  // BGM一元管理（画面状態に応じて1つだけ再生）
+  const bgmSrc = (() => {
+    if (questLogic.isCleared) return "/bgm/clear.mp3";
+    if (questLogic.currentScreen === "battle" && questLogic.selectedSubject) {
+      if (questLogic.player.hp <= 0) return "/bgm/gameover.mp3";
+      const imp = questLogic.selectedSubject.importance;
+      return imp <= 2 ? "/bgm/battle_low.mp3" : imp <= 4 ? "/bgm/battle_mid.mp3" : "/bgm/battle_high.mp3";
+    }
+    return "/bgm/title.mp3";
+  })();
+  useBGM(bgmSrc);
 
   const navigate = useCallback((screen: ScreenType, id?: string) => {
     setFading(true);

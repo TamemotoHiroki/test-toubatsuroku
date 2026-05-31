@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Subject, Player, ScreenType, DefeatedSubject } from "../types";
 import { RetroWindow, RetroButton, RetroHpBar, RetroTab, Confetti, GlitchImage } from "./RetroUI";
 import { useButtonSE } from "../hooks/useButtonSE";
-import { useBGM } from "../hooks/useBGM";
 
 interface Props {
   subjects: Subject[];
@@ -27,7 +26,6 @@ export const HomeScreen = ({
 }: Props) => {
   const [tab, setTab] = useState<"bosses" | "cleared">("bosses");
   const { playDecide } = useButtonSE();
-  useBGM(isCleared ? "/bgm/clear.mp3" : "/bgm/title.mp3");
 
   const clearPlayedRef = useRef(false);
   useEffect(() => {
