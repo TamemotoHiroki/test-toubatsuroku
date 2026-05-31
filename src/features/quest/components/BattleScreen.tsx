@@ -62,7 +62,7 @@ export const BattleScreen = ({
     subject.importance <= 2 ? "/bgm/battle_low.mp3" :
     subject.importance <= 4 ? "/bgm/battle_mid.mp3" :
     "/bgm/battle_high.mp3";
-  useBGM(playerHp > 0 ? battleBgm : null);
+  useBGM(playerHp > 0 ? battleBgm : "/bgm/gameover.mp3");
 
   const seRef = useRef<Record<string, HTMLAudioElement>>({});
   useEffect(() => {
