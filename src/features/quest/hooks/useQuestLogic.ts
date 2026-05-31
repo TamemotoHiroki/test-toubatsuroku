@@ -102,8 +102,8 @@ const INITIAL_SUBJECTS: Subject[] = [
       createTask("積分の計算練習"),
     ],
     current_hp: 300,
-    importance: 4,
-    imageUrl: "/monsters/enemy_kisi_3.png",
+    importance: 1,
+    imageUrl: "/monsters/zako_1.png",
   },
   {
     id: "2",
@@ -117,8 +117,8 @@ const INITIAL_SUBJECTS: Subject[] = [
       createTask("過去問を1問解く"),
     ],
     current_hp: 500,
-    importance: 5,
-    imageUrl: "/monsters/enemy_kisi_3.png",
+    importance: 3,
+    imageUrl: "/monsters/dragon_2.png",
   },
 ];
 
