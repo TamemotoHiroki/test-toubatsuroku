@@ -1,4 +1,5 @@
 // src/features/quest/components/BattleScreen.tsx
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import { Subject } from "../types";
 import { RetroWindow, RetroButton, RetroInput, RetroHpBar, RetroMessage, DamagePopup, GlitchImage } from "./RetroUI";
@@ -58,7 +59,6 @@ export const BattleScreen = ({
   const { playDecide, playCancel } = useButtonSE();
 
   const playSE = (src: string) => {
-    alert("[SE] " + src); // 一時デバッグ
     new Audio(src).play().catch(() => {});
   };
 
