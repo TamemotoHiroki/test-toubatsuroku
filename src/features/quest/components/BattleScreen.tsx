@@ -261,6 +261,7 @@ export const BattleScreen = ({
     } else {
       triggerAttackGlitch();
       setMessage(`ゆうしゃのこうげき！\n${totalDamage} のダメージ！`);
+      setIsAttacking(false);
     }
 
     setTimerCheckedTasks(new Set());
