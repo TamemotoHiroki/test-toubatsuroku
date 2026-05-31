@@ -44,6 +44,10 @@ next-env.d.ts
 # local backups
 .backup_working_files/
 
+# playwright
+test-results/
+playwright-report/
+
 # private — AI instructions & temp files
 .ai/
 CLAUDE.md
