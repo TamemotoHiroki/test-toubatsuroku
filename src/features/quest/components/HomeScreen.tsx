@@ -114,14 +114,14 @@ export const HomeScreen = ({
             {/* タブ */}
             <div className="flex border-b-2 border-white/30 mb-4 -mx-4 -mt-4 px-4">
               <RetroTab
-                onClick={() => setTab("bosses")}
+                onClick={() => { playDecide(); setTab("bosses"); }}
                 isActive={tab === "bosses"}
                 hasBorderRight
               >
                 中ボス一覧
               </RetroTab>
               <RetroTab
-                onClick={() => setTab("cleared")}
+                onClick={() => { playDecide(); setTab("cleared"); }}
                 isActive={tab === "cleared"}
               >
                 戦績
