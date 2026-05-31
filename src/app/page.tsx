@@ -21,7 +21,7 @@ export default function QuestApp() {
     if (questLogic.currentScreen === "battle" && questLogic.selectedSubject) {
       if (questLogic.player.hp <= 0) return "/bgm/gameover.mp3";
       const imp = questLogic.selectedSubject.importance;
-      return imp <= 2 ? "/bgm/battle_low.mp3" : imp <= 4 ? "/bgm/battle_mid.mp3" : "/bgm/battle_high.mp3";
+      return imp <= 2 ? "/bgm/battle_low.mp3" : imp === 3 ? "/bgm/battle_mid.mp3" : "/bgm/battle_high.mp3";
     }
     return "/bgm/title.mp3";
   })();
