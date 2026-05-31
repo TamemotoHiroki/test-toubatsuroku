@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Subject, Player, ScreenType, DefeatedSubject } from "../types";
 import { RetroWindow, RetroButton, RetroHpBar } from "./RetroUI";
+import { useButtonSE } from "../hooks/useButtonSE";
 
 interface Props {
   subjects: Subject[];
@@ -24,6 +25,7 @@ export const HomeScreen = ({
   onResetQuest,
 }: Props) => {
   const [tab, setTab] = useState<"bosses" | "cleared">("bosses");
+  const { playDecide, playCancel } = useButtonSE();
 
   const clearPlayedRef = useRef(false);
   useEffect(() => {
@@ -67,7 +69,7 @@ export const HomeScreen = ({
             </div>
           )}
           <div className="mt-6">
-            <RetroButton onClick={onResetQuest}>
+            <RetroButton onClick={() => { playDecide(); onResetQuest(); }}>
               あらたな冒険へ（周回する）
             </RetroButton>
           </div>
@@ -114,7 +116,7 @@ export const HomeScreen = ({
                     return (
                       <RetroButton
                         key={subject.id}
-                        onClick={() => onNavigate("battle", subject.id)}
+                        onClick={() => { playDecide(); onNavigate("battle", subject.id); }}
                       >
                         <div className="flex-1 min-w-0 py-1">
                           <div className="text-sm">{subject.title}</div>
@@ -168,7 +170,7 @@ export const HomeScreen = ({
 
           {/* 科目登録 */}
           <RetroWindow>
-            <RetroButton onClick={() => onNavigate("register")}>
+            <RetroButton onClick={() => { playDecide(); onNavigate("register"); }}>
               ＋ 新しき試練（科目）を登録する
             </RetroButton>
           </RetroWindow>
