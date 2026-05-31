@@ -50,5 +50,8 @@ playwright-report/
 
 # private — AI instructions & temp files
 .ai/
+
+# log files
+*.log
 CLAUDE.md
 ui-preview.html
