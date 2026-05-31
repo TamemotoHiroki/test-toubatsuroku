@@ -60,6 +60,7 @@ export const BattleScreen = ({
   const seRef = useRef<Record<string, HTMLAudioElement>>({});
   useEffect(() => {
     seRef.current = {
+      attack:   new Audio("/se/attack.wav"),
       defeat:   new Audio("/se/defeat.wav"),
       damage:   new Audio("/se/damage.wav"),
       gameover: new Audio("/se/gameover.wav"),
@@ -78,7 +79,7 @@ export const BattleScreen = ({
     }
   }, [playerHp]);
 
-  const playSE = (key: "defeat" | "damage" | "gameover") => {
+  const playSE = (key: "attack" | "defeat" | "damage" | "gameover") => {
     const audio = seRef.current[key];
     if (!audio) return;
     audio.currentTime = 0;
@@ -252,6 +253,7 @@ export const BattleScreen = ({
       setIsDefeated(true);
       setIsAttacking(false);
     } else {
+      playSE("attack");
       triggerAttackGlitch();
       clearTimerInterval();
       setTimerPhase("idle");
