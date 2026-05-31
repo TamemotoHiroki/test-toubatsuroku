@@ -91,36 +91,7 @@ const uniqueDefeatedSubjects = (items: unknown): DefeatedSubject[] => {
   return Array.from(map.values());
 };
 
-const INITIAL_SUBJECTS: Subject[] = [
-  {
-    id: "1",
-    title: "微積分",
-    exam_date: "2026-06-10",
-    tasks: [
-      createTask("極限の基本問題を解く"),
-      createTask("微分の計算練習"),
-      createTask("積分の計算練習"),
-    ],
-    current_hp: 300,
-    importance: 1,
-    imageUrl: "/monsters/zako_1.png",
-  },
-  {
-    id: "2",
-    title: "量子力学",
-    exam_date: "2026-06-15",
-    tasks: [
-      createTask("波動関数の概念を復習する"),
-      createTask("シュレーディンガー方程式を確認する"),
-      createTask("不確定性原理をまとめる"),
-      createTask("演算子と期待値の計算練習"),
-      createTask("過去問を1問解く"),
-    ],
-    current_hp: 500,
-    importance: 3,
-    imageUrl: "/monsters/dragon_2.png",
-  },
-];
+const INITIAL_SUBJECTS: Subject[] = [];
 
 interface StoredState {
   version: number;
