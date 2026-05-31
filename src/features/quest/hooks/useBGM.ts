@@ -1,46 +1,49 @@
 import { useEffect } from "react";
 
-// モジュールレベルのシングルトン: 常に1つのBGMのみ再生
-let activeBGM: HTMLAudioElement | null = null;
-let pendingUnlock: (() => void) | null = null;
+// アプリ全体で1つのAudio要素のみ使用 → 物理的に重複不可
+let bgmAudio: HTMLAudioElement | null = null;
 
-const stopActiveBGM = () => {
-  if (activeBGM) {
-    activeBGM.pause();
-    activeBGM.currentTime = 0;
-    activeBGM = null;
+const getAudio = (volume: number): HTMLAudioElement => {
+  if (!bgmAudio) {
+    bgmAudio = new Audio();
+    bgmAudio.loop = true;
   }
-  if (pendingUnlock) {
-    document.removeEventListener("click", pendingUnlock);
-    document.removeEventListener("keydown", pendingUnlock);
-    pendingUnlock = null;
-  }
+  bgmAudio.volume = volume;
+  return bgmAudio;
 };
 
 export const useBGM = (src: string | null, volume = 0.5) => {
   useEffect(() => {
-    // 既存のBGM・unlock待ちを完全に停止してからスタート
-    stopActiveBGM();
+    const audio = getAudio(volume);
 
-    if (!src) return;
+    if (!src) {
+      audio.pause();
+      return;
+    }
 
-    const audio = new Audio(src);
-    audio.loop = true;
-    audio.volume = volume;
-    activeBGM = audio;
+    // 既に同じsrcを再生中なら何もしない
+    const nextSrc = new URL(src, window.location.href).href;
+    if (audio.src === nextSrc && !audio.paused) return;
 
-    const unlock = () => {
-      audio.play().catch(() => {});
-      pendingUnlock = null;
+    // srcが変わった場合は切り替え
+    if (audio.src !== nextSrc) {
+      audio.pause();
+      audio.src = src;
+      audio.currentTime = 0;
+    }
+
+    const tryPlay = () => {
+      audio.play().catch(() => {
+        // Autoplay Policy でブロックされたら最初の操作で再生
+        const unlock = () => {
+          audio.play().catch(() => {});
+          document.removeEventListener("keydown", unlock);
+        };
+        document.addEventListener("click", unlock, { once: true });
+        document.addEventListener("keydown", unlock, { once: true });
+      });
     };
 
-    audio.play().catch(() => {
-      // Autoplay Policy でブロックされたら最初のユーザー操作で再生
-      pendingUnlock = unlock;
-      document.addEventListener("click", unlock, { once: true });
-      document.addEventListener("keydown", unlock, { once: true });
-    });
-
-    return stopActiveBGM;
-  }, [src]);
+    tryPlay();
+  }, [src, volume]);
 };
