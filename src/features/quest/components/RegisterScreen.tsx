@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Subject, Task } from "../types";
 import { RetroWindow, RetroButton, RetroInput, RetroSelect } from "./RetroUI";
+import { useButtonSE } from "../hooks/useButtonSE";
 
 interface Props {
   onRegister: (subject: Omit<Subject, "id" | "current_hp">) => void;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const RegisterScreen = ({ onRegister, onBack }: Props) => {
+  const { playDecide, playCancel } = useButtonSE();
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [importance, setImportance] = useState("3");
@@ -98,7 +100,7 @@ export const RegisterScreen = ({ onRegister, onBack }: Props) => {
                 onKeyDown={handleTaskKeyDown}
                 placeholder="例: 微分の練習問題"
               />
-              <RetroButton type="button" onClick={addTask}>
+              <RetroButton type="button" onClick={() => { playDecide(); addTask(); }}>
                 追加
               </RetroButton>
             </div>
@@ -120,7 +122,7 @@ export const RegisterScreen = ({ onRegister, onBack }: Props) => {
                     <span className="flex-1 text-sm">{task.title}</span>
                     <button
                       type="button"
-                      onClick={() => removeTask(task.id)}
+                      onClick={() => { playCancel(); removeTask(task.id); }}
                       className="text-xs opacity-40 hover:opacity-100 hover:text-[#ff0000] transition-colors shrink-0"
                     >
                       ✕
@@ -133,10 +135,10 @@ export const RegisterScreen = ({ onRegister, onBack }: Props) => {
 
           {/* 送信 */}
           <div className="flex gap-3 pt-1 border-t border-white/20">
-            <RetroButton type="submit" disabled={!title || !date || tasks.length === 0}>
+            <RetroButton type="submit" disabled={!title || !date || tasks.length === 0} onClick={playDecide}>
               登録する
             </RetroButton>
-            <RetroButton type="button" onClick={onBack}>
+            <RetroButton type="button" onClick={() => { playCancel(); onBack(); }}>
               もどる
             </RetroButton>
           </div>

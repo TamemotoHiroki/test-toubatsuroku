@@ -132,20 +132,32 @@ export const RetroMessage = ({
 
 type GlitchMode = "idle" | "attack" | "defeat";
 
+const IDLE_VARIANTS = [
+  { wrapper: "idleFloat 2.2s ease-in-out infinite",     glitch: "none" },
+  { wrapper: "idleFloat 2.2s ease-in-out infinite",     glitch: "idleGlitch 3.5s linear infinite" },
+  { wrapper: "idleBreath 2.8s ease-in-out infinite",    glitch: "idleGlitch 3.5s linear infinite" },
+];
+
 export const GlitchImage = ({
   src,
   alt,
   glitchMode,
   glitchTrigger,
+  className = "h-40 w-40 sm:h-64 sm:w-64",
+  idleVariant,
 }: {
   src: string;
   alt: string;
   glitchMode: GlitchMode;
   glitchTrigger: number;
+  className?: string;
+  idleVariant?: number;
 }) => {
   const imgRef = useRef<HTMLImageElement>(null);
 
-  const [idleType] = useState(() => Math.floor(Math.random() * 3));
+  const [randomVariant, setRandomVariant] = useState(1);
+  useEffect(() => { setRandomVariant(Math.floor(Math.random() * 3)); }, []);
+  const variant = IDLE_VARIANTS[idleVariant ?? randomVariant] ?? IDLE_VARIANTS[1];
 
   useEffect(() => {
     const el = imgRef.current;
@@ -153,7 +165,7 @@ export const GlitchImage = ({
     el.style.animation = "none";
     el.getBoundingClientRect();
     if (glitchMode === "idle") {
-      el.style.animation = "idleGlitch 3.5s linear infinite";
+      el.style.animation = variant.glitch;
     } else if (glitchMode === "attack") {
       el.style.animation = "glitchAttack 0.35s ease-out forwards";
     } else {
@@ -162,13 +174,7 @@ export const GlitchImage = ({
   }, [glitchMode, glitchTrigger]);
 
   const isIdle = glitchMode === "idle";
-  const wrapperAnim = isIdle
-    ? idleType === 0
-      ? "idleBreath 2.8s ease-in-out infinite"
-      : idleType === 1
-      ? "idleFloat 2.2s ease-in-out infinite"
-      : "none"
-    : "none";
+  const wrapperAnim = isIdle ? variant.wrapper : "none";
 
   return (
     <div style={{ animation: wrapperAnim }}>
@@ -176,7 +182,7 @@ export const GlitchImage = ({
         ref={imgRef}
         src={src}
         alt={alt}
-        className="h-64 w-64 object-contain"
+        className={`${className} object-contain`}
         style={{ imageRendering: "pixelated" }}
       />
     </div>
@@ -210,7 +216,8 @@ const generateConfetti = (): ConfettiPiece[] =>
   }));
 
 export const Confetti = () => {
-  const [pieces] = useState<ConfettiPiece[]>(generateConfetti);
+  const [pieces, setPieces] = useState<ConfettiPiece[]>([]);
+  useEffect(() => { setPieces(generateConfetti()); }, []);
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">

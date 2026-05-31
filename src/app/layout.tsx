@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -6,6 +6,12 @@ const misaki = localFont({
   src: "./fonts/misaki_gothic_2nd.ttf",
   variable: "--font-misaki",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "テスト討伐録",

@@ -27,7 +27,7 @@ const normalizeSubject = (subject: any): Subject => {
       tasks,
       current_hp:
         typeof subject.current_hp === "number"
-          ? subject.current_hp
+          ? Math.min(subject.current_hp, tasks.filter((t) => !t.isDone).length * 100)
           : tasks.filter((task) => !task.isDone).length * 100,
       importance: Number.isFinite(subject.importance)
         ? Number(subject.importance)
@@ -205,19 +205,16 @@ export const useQuestLogic = () => {
   );
 
   const addSubject = (subject: Omit<Subject, "id" | "current_hp">) => {
-    const monsterImages = [
-      "/monsters/0.png",
-      "/monsters/1.png",
-      "/monsters/2.png",
-      "/monsters/3.png",
-      "/monsters/4.png",
-    ];
-    const randomImage = monsterImages[Math.floor(Math.random() * monsterImages.length)];
+    const imp = subject.importance;
+    const imageUrl =
+      imp <= 2 ? "/monsters/1.png" :
+      imp === 3 ? "/monsters/2.png" :
+                  "/monsters/3.png";
     const newSubject: Subject = {
       ...subject,
       id: crypto.randomUUID(),
       current_hp: subject.tasks.length * 100,
-      imageUrl: randomImage,
+      imageUrl,
     };
     setSubjects((prev) => [...prev, newSubject]);
     setCurrentScreen("home");
@@ -245,6 +242,59 @@ export const useQuestLogic = () => {
     );
 
     return attack(subjectId, 0, 1);
+  };
+
+  const completeMultipleTasks = (subjectId: string, taskIds: string[]) => {
+    const targetSubject = subjects.find((s) => s.id === subjectId);
+    if (!targetSubject) return { damage: 0, isDefeated: false };
+
+    const validIds = taskIds.filter((id) => {
+      const task = targetSubject.tasks.find((t) => t.id === id);
+      return task && !task.isDone;
+    });
+
+    if (validIds.length === 0) return { damage: 0, isDefeated: false };
+
+    const damage = validIds.length * 100;
+    const newHp = Math.max(0, targetSubject.current_hp - damage);
+    const isDefeated = newHp <= 0;
+
+    setSubjects((prev) =>
+      prev.map((s) =>
+        s.id !== subjectId
+          ? s
+          : {
+              ...s,
+              current_hp: newHp,
+              tasks: s.tasks.map((t) =>
+                validIds.includes(t.id) ? { ...t, isDone: true } : t,
+              ),
+            },
+      ),
+    );
+
+    if (isDefeated) {
+      setDefeatedSubjects((prev) =>
+        uniqueDefeatedSubjects([
+          ...prev,
+          {
+            id: targetSubject.id,
+            title: targetSubject.title,
+            exam_date: targetSubject.exam_date,
+            study_minutes: 0,
+            tasks_cleared:
+              targetSubject.tasks.filter((t) => t.isDone).length + validIds.length,
+          },
+        ]),
+      );
+
+      const allDefeated = subjects
+        .map((s) => (s.id === subjectId ? { ...s, current_hp: newHp } : s))
+        .every((s) => s.current_hp <= 0);
+      if (allDefeated) setIsCleared(true);
+    }
+
+    return { damage, isDefeated };
   };
 
   const attack = (
@@ -369,6 +419,7 @@ export const useQuestLogic = () => {
     addSubject,
     addTask,
     completeTask,
+    completeMultipleTasks,
     attack,
     playerTakeDamage,
     restorePlayerHp,

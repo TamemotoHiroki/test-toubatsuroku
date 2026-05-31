@@ -25,7 +25,7 @@ export default function QuestApp() {
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-[#0a0a0a]">
       <div
-        className="w-full max-w-2xl min-h-[600px] p-6 bg-[#000020] transition-opacity duration-150"
+        className="w-full max-w-2xl p-3 sm:p-6 bg-[#000020] transition-opacity duration-150"
         style={{ opacity: fading ? 0 : 1 }}
       >
         {questLogic.currentScreen === "home" && (
@@ -47,7 +47,7 @@ export default function QuestApp() {
               subject={questLogic.selectedSubject}
               playerHp={questLogic.player.hp}
               onAttack={questLogic.attack}
-              onCompleteTask={questLogic.completeTask}
+              onCompleteMultipleTasks={questLogic.completeMultipleTasks}
               onPlayerDamage={questLogic.playerTakeDamage}
               onAddTask={questLogic.addTask}
               onAddExp={questLogic.addExp}

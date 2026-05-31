@@ -2,8 +2,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Subject } from "../types";
 import { RetroWindow, RetroButton, RetroInput, RetroHpBar, RetroMessage, DamagePopup, GlitchImage } from "./RetroUI";
+import { useButtonSE } from "../hooks/useButtonSE";
 
 type TimerPhase = "idle" | "running" | "paused";
+
+const GAMEOVER_MESSAGES = [
+  "今日は勉強できませんでした。\n家でNetflixでも観ましょう。",
+  "人生山あり谷あり。\n今は谷のようです。",
+  "あちゃー、今年はだめかあ。\n来年も遊ぼうな！",
+  "このゲームはやり直せても、\n人生は一度きりですよ？",
+  "やったあ！もう一回遊べるドン！",
+  "素晴らしい。",
+  "素晴らしい長考です！\nあなたは芸術家タイプですね！",
+  "おめでとう。",
+];
 
 const formatTime = (seconds: number) => {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -15,7 +27,7 @@ interface Props {
   subject: Subject;
   playerHp: number;
   onAttack: (subjectId: string, minutes: number, tasks: number) => { damage: number; isDefeated: boolean };
-  onCompleteTask: (subjectId: string, taskId: string) => { damage: number; isDefeated: boolean };
+  onCompleteMultipleTasks: (subjectId: string, taskIds: string[]) => { damage: number; isDefeated: boolean };
   onPlayerDamage: (damage: number) => void;
   onAddTask: (subjectId: string, title: string) => string;
   onAddExp: (minutes: number) => void;
@@ -28,7 +40,7 @@ export const BattleScreen = ({
   subject,
   playerHp,
   onAttack,
-  onCompleteTask,
+  onCompleteMultipleTasks,
   onPlayerDamage,
   onAddTask,
   onAddExp,
@@ -42,6 +54,36 @@ export const BattleScreen = ({
   const [popups, setPopups] = useState<{ id: string; damage: number }[]>([]);
   const [glitchMode, setGlitchMode] = useState<"idle" | "attack" | "defeat">("idle");
   const [glitchTrigger, setGlitchTrigger] = useState(0);
+
+  const { playDecide, playCancel } = useButtonSE();
+
+  const seRef = useRef<Record<string, HTMLAudioElement>>({});
+  useEffect(() => {
+    seRef.current = {
+      defeat:   new Audio("/se/defeat.wav"),
+      damage:   new Audio("/se/damage.wav"),
+      gameover: new Audio("/se/gameover.wav"),
+    };
+  }, []);
+
+  const gameoverPlayedRef = useRef(false);
+  const gameoverMessageRef = useRef("");
+  const [gameoverMessageVisible, setGameoverMessageVisible] = useState(false);
+  useEffect(() => {
+    if (playerHp <= 0 && !gameoverPlayedRef.current) {
+      gameoverPlayedRef.current = true;
+      gameoverMessageRef.current = GAMEOVER_MESSAGES[Math.floor(Math.random() * GAMEOVER_MESSAGES.length)];
+      playSE("gameover");
+      setTimeout(() => setGameoverMessageVisible(true), 700);
+    }
+  }, [playerHp]);
+
+  const playSE = (key: "defeat" | "damage" | "gameover") => {
+    const audio = seRef.current[key];
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  };
 
   const triggerAttackGlitch = () => {
     setGlitchMode("attack");
@@ -63,7 +105,9 @@ export const BattleScreen = ({
   // ── タイマー状態 ────────────────────────────────────────
   const [timerPhase, setTimerPhase] = useState<TimerPhase>("idle");
   const [timeLeft, setTimeLeft] = useState(0);
+  const [inputHours, setInputHours] = useState("0");
   const [inputMinutes, setInputMinutes] = useState("25");
+  const [inputSeconds, setInputSeconds] = useState("0");
 
   // セットアップ時の選択タスク
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
@@ -96,6 +140,7 @@ export const BattleScreen = ({
     if (unchecked.length > 0) {
       const dmg = unchecked.length * 50 * subject.importance;
       onPlayerDamage(dmg);
+      playSE("damage");
       setMessage(`じかんきれ！ てきのこうげき！\n-${dmg} ダメージ！`);
     }
 
@@ -142,9 +187,12 @@ export const BattleScreen = ({
   };
 
   const handleStartTimer = () => {
-    const min = parseInt(inputMinutes, 10);
-    if (!min || min <= 0) return;
-    pendingMinutesRef.current = min;
+    const h = parseInt(inputHours, 10) || 0;
+    const m = parseInt(inputMinutes, 10) || 0;
+    const s = parseInt(inputSeconds, 10) || 0;
+    const totalSeconds = h * 3600 + m * 60 + s;
+    if (totalSeconds <= 0) return;
+    pendingMinutesRef.current = Math.floor(totalSeconds / 60);
     // isDone済みのタスクは除外（別ターン完了分を混入させない）
     const nonDoneIds = new Set(subject.tasks.filter((t) => !t.isDone).map((t) => t.id));
     pendingTasksRef.current =
@@ -152,7 +200,7 @@ export const BattleScreen = ({
         ? Array.from(selectedTasks).filter((id) => nonDoneIds.has(id))
         : Array.from(nonDoneIds);
     setTimerCheckedTasks(new Set());
-    setTimeLeft(min * 60);
+    setTimeLeft(totalSeconds);
     setTimerPhase("running");
   };
 
@@ -171,22 +219,30 @@ export const BattleScreen = ({
     setIsAttacking(false);
   };
 
-  // タイマー稼働中にタスクをチェック → 即時攻撃
-  const handleTimerTaskCheck = (taskId: string) => {
-    if (timerCheckedTasks.has(taskId)) return;
-    const result = onCompleteTask(subject.id, taskId);
+  // タイマー稼働中のチェック → やった印のみ（ダメージなし）
+  const handleTimerTaskToggle = (taskId: string) => {
+    if (subject.tasks.find(t => t.id === taskId)?.isDone) return;
+    setTimerCheckedTasks(prev => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId); else next.add(taskId);
+      return next;
+    });
+  };
 
-    const newChecked = new Set([...timerCheckedTasks, taskId]);
-    setTimerCheckedTasks(newChecked);
+  // 完了ボタン → チェック済みタスクをまとめて攻撃
+  const handleConfirmAttack = () => {
+    if (timerCheckedTasks.size === 0) return;
+    const min = pendingMinutesRef.current;
 
-    // 全タスク完了チェック
-    const allDone = pendingTasksRef.current.every(
-      (id) => newChecked.has(id) || subject.tasks.find((t) => t.id === id)?.isDone,
+    const { damage: totalDamage, isDefeated: defeated } = onCompleteMultipleTasks(
+      subject.id,
+      Array.from(timerCheckedTasks),
     );
 
-    const min = pendingMinutesRef.current;
-    if (result.isDefeated) {
-      if (result.damage > 0) showDamagePopup(result.damage);
+    showDamagePopup(totalDamage);
+
+    if (defeated) {
+      playSE("defeat");
       triggerDefeatGlitch();
       clearTimerInterval();
       setTimerPhase("idle");
@@ -195,20 +251,12 @@ export const BattleScreen = ({
       setMessage(`${subject.title} を たおした！\n+${min} EXP を獲得した！`);
       setIsDefeated(true);
       setIsAttacking(false);
-    } else if (allDone) {
-      const totalDamage = newChecked.size * 100;
-      showDamagePopup(totalDamage);
+    } else {
       triggerAttackGlitch();
-      clearTimerInterval();
-      setTimerPhase("idle");
-      onAddExp(min);
       setMessage(`ゆうしゃのこうげき！\n${totalDamage} のダメージ！`);
-      setIsAttacking(false);
-    } else if (result.damage > 0) {
-      showDamagePopup(result.damage);
-      triggerAttackGlitch();
-      setMessage(`ゆうしゃのこうげき！\n${result.damage} のダメージ！`);
     }
+
+    setTimerCheckedTasks(new Set());
   };
 
   // 新規タスク追加
@@ -226,22 +274,35 @@ export const BattleScreen = ({
     return (
       <div className="space-y-4">
         <RetroWindow title="-- GAME OVER --">
-          <p className="text-center text-lg mb-3" style={{ color: "#ff0000" }}>
-            ゆうしゃ は たおれた…
-          </p>
-          <p className="text-center text-sm leading-relaxed opacity-80">
-            今日は勉強できませんでした。<br />
-            家でNetflixでも観ましょう。
-          </p>
+          <div className="text-center text-lg mb-3" style={{ color: "#ff0000" }}>
+            <RetroMessage speed={60}>ゆうしゃ は たおれた…</RetroMessage>
+          </div>
+          {gameoverMessageVisible && (
+            <div className="text-center text-sm opacity-80">
+              <RetroMessage speed={40}>{gameoverMessageRef.current}</RetroMessage>
+            </div>
+          )}
         </RetroWindow>
-        <RetroButton onClick={onGameOver} className="w-full">タイトルへもどる</RetroButton>
+        <RetroButton onClick={() => { playCancel(); onGameOver(); }} className="w-full">タイトルへもどる</RetroButton>
       </div>
     );
   }
 
+  const dangerPulseDuration =
+    timeLeft <= 10 ? "0.4s" : timeLeft <= 30 ? "0.7s" : "1.2s";
+
   // ── バトル画面 ───────────────────────────────────────────
   return (
     <div className="space-y-4">
+      {timeLeft <= 60 && timerPhase === "running" && (
+        <div
+          className="fixed inset-0 pointer-events-none z-40"
+          style={{
+            background: "radial-gradient(ellipse at center, transparent 30%, rgba(255,0,0,0.3) 100%)",
+            animation: `dangerPulse ${dangerPulseDuration} ease-in-out infinite`,
+          }}
+        />
+      )}
       {/* 敵情報 + ダメージポップアップ */}
       <div className="relative">
         <RetroWindow title={subject.title}>
@@ -258,12 +319,16 @@ export const BattleScreen = ({
       {/* モンスター画像 */}
       {subject.imageUrl && (
         <RetroWindow>
-          <div className="flex items-end justify-center h-[220px] overflow-hidden">
+          <div className="flex items-end justify-center h-[160px] sm:h-[220px] overflow-hidden">
             <GlitchImage
               src={subject.imageUrl}
               alt={subject.title}
               glitchMode={glitchMode}
               glitchTrigger={glitchTrigger}
+              idleVariant={
+                subject.imageUrl?.includes("/monsters/1") ? 0 :
+                subject.imageUrl?.includes("/monsters/2") ? 1 : 2
+              }
             />
           </div>
         </RetroWindow>
@@ -277,14 +342,38 @@ export const BattleScreen = ({
             /* ① セットアップ */
             <div className="space-y-4">
               <div>
-                <label className="block mb-1 text-xs opacity-60">勉強時間（分）</label>
-                <RetroInput
-                  type="number"
-                  value={inputMinutes}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputMinutes(e.target.value)}
-                  min="1"
-                  placeholder="25"
-                />
+                <label className="block mb-1 text-xs opacity-60">勉強時間</label>
+                <div className="flex items-center gap-2">
+                  <RetroInput
+                    type="number"
+                    value={inputHours}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputHours(e.target.value)}
+                    min="0"
+                    placeholder="0"
+                    className="w-16 text-center"
+                  />
+                  <span className="text-xs opacity-60 shrink-0">時間</span>
+                  <RetroInput
+                    type="number"
+                    value={inputMinutes}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputMinutes(e.target.value)}
+                    min="0"
+                    max="59"
+                    placeholder="25"
+                    className="w-16 text-center"
+                  />
+                  <span className="text-xs opacity-60 shrink-0">分</span>
+                  <RetroInput
+                    type="number"
+                    value={inputSeconds}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputSeconds(e.target.value)}
+                    min="0"
+                    max="59"
+                    placeholder="0"
+                    className="w-16 text-center"
+                  />
+                  <span className="text-xs opacity-60 shrink-0">秒</span>
+                </div>
               </div>
 
               {/* タスク一覧 + 追加 */}
@@ -323,15 +412,15 @@ export const BattleScreen = ({
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") { e.preventDefault(); handleAddTask(); } }}
                     placeholder="＋ 新しいタスクを追加"
                   />
-                  <RetroButton type="button" onClick={handleAddTask}>追加</RetroButton>
+                  <RetroButton type="button" onClick={() => { playDecide(); handleAddTask(); }}>追加</RetroButton>
                 </div>
               </div>
 
               <div className="flex gap-2 pt-1">
-                <RetroButton onClick={handleCancelAttack}>やめる</RetroButton>
+                <RetroButton onClick={() => { playCancel(); handleCancelAttack(); }}>やめる</RetroButton>
                 <RetroButton
-                  onClick={handleStartTimer}
-                  disabled={!inputMinutes || parseInt(inputMinutes) <= 0}
+                  onClick={() => { playDecide(); handleStartTimer(); }}
+                  disabled={(parseInt(inputHours) || 0) * 3600 + (parseInt(inputMinutes) || 0) * 60 + (parseInt(inputSeconds) || 0) <= 0}
                 >
                   タイマー開始
                 </RetroButton>
@@ -362,7 +451,7 @@ export const BattleScreen = ({
               {/* タスク一覧（チェックで即時攻撃） */}
               <div className="border-t border-white/20 pt-3">
                 <p className="text-xs opacity-60 mb-2">
-                  タスクをチェック → 敵にダメージ
+                  やったタスクにチェック → 完了ボタンで攻撃
                 </p>
                 <div className="space-y-1">
                   {pendingTasksRef.current.length === 0 ? (
@@ -371,22 +460,23 @@ export const BattleScreen = ({
                     pendingTasksRef.current.map((taskId) => {
                       const task = subject.tasks.find((t) => t.id === taskId);
                       if (!task) return null;
-                      const checked = timerCheckedTasks.has(taskId) || task.isDone;
+                      const isDone = task.isDone;
+                      const checked = timerCheckedTasks.has(taskId);
                       return (
                         <label
                           key={taskId}
                           className={`flex items-center gap-3 px-2 py-2 border border-white/20 text-sm cursor-pointer ${
-                            checked ? "opacity-40" : "hover:border-[#ffd700]/60"
+                            isDone ? "opacity-40" : checked ? "border-[#ffd700]/60" : "hover:border-[#ffd700]/40"
                           }`}
                         >
                           <input
                             type="checkbox"
-                            checked={checked}
-                            disabled={checked || timerPhase === "paused"}
-                            onChange={() => handleTimerTaskCheck(taskId)}
+                            checked={checked || isDone}
+                            disabled={isDone || timerPhase === "paused"}
+                            onChange={() => handleTimerTaskToggle(taskId)}
                             className="h-4 w-4 accent-[#ffd700] shrink-0"
                           />
-                          <span className={checked ? "line-through" : ""}>{task.title}</span>
+                          <span className={isDone ? "line-through" : ""}>{task.title}</span>
                         </label>
                       );
                     })
@@ -403,11 +493,17 @@ export const BattleScreen = ({
 
               <div className="flex gap-2 pt-1">
                 {timerPhase === "running" ? (
-                  <RetroButton onClick={handlePause}>一時停止</RetroButton>
+                  <RetroButton onClick={() => { playCancel(); handlePause(); }}>一時停止</RetroButton>
                 ) : (
-                  <RetroButton onClick={handleResume}>再開</RetroButton>
+                  <RetroButton onClick={() => { playDecide(); handleResume(); }}>再開</RetroButton>
                 )}
-                <RetroButton onClick={handleStop}>終了</RetroButton>
+                <RetroButton
+                  onClick={() => { playDecide(); handleConfirmAttack(); }}
+                  disabled={timerCheckedTasks.size === 0 || timerPhase === "paused"}
+                >
+                  完了
+                </RetroButton>
+                <RetroButton onClick={() => { playCancel(); handleStop(); }}>終了</RetroButton>
               </div>
             </div>
           )}
@@ -418,7 +514,7 @@ export const BattleScreen = ({
           <RetroWindow className="min-h-[80px]">
             <RetroMessage>{message}</RetroMessage>
           </RetroWindow>
-          <RetroButton onClick={onBack} className="w-full">つづける</RetroButton>
+          <RetroButton onClick={() => { playDecide(); onBack(); }} className="w-full">つづける</RetroButton>
         </div>
 
       ) : (
@@ -427,8 +523,8 @@ export const BattleScreen = ({
             <RetroMessage>{message}</RetroMessage>
           </RetroWindow>
           <div className="flex flex-col gap-2 w-28 shrink-0">
-            <RetroButton onClick={() => setIsAttacking(true)}>たたかう</RetroButton>
-            <RetroButton onClick={onBack}>にげる</RetroButton>
+            <RetroButton onClick={() => { playDecide(); setIsAttacking(true); }}>たたかう</RetroButton>
+            <RetroButton onClick={() => { playCancel(); onBack(); }}>にげる</RetroButton>
           </div>
         </div>
       )}
