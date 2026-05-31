@@ -220,10 +220,7 @@ export const useQuestLogic = () => {
 
   const addSubject = (subject: Omit<Subject, "id" | "current_hp">) => {
     const imp = subject.importance;
-    const pool =
-      imp <= 2 ? ["/monsters/1.png"] :
-      imp === 3 ? ["/monsters/2.png"] :
-                  ["/monsters/3.png", "/monsters/4.png"];
+    const pool = getMonsterPool(imp);
     const imageUrl = pool[Math.floor(Math.random() * pool.length)];
     const newSubject: Subject = {
       ...subject,
