@@ -64,6 +64,7 @@ export const BattleScreen = ({
       defeat: new Audio("/se/defeat.wav"),
       damage: new Audio("/se/damage.wav"),
       gameover: new Audio("/se/gameover.wav"),
+      start: new Audio("/se/start.wav"),
     };
   }, []);
 
@@ -74,7 +75,7 @@ export const BattleScreen = ({
       playSE("gameover");
     }
   }, [playerHp]);
-  const playSE = (key: "attack" | "defeat" | "damage" | "gameover") => {
+  const playSE = (key: "attack" | "defeat" | "damage" | "gameover" | "start") => {
     const audio = seRef.current[key];
     if (!audio) return;
     audio.currentTime = 0;
@@ -152,6 +153,7 @@ export const BattleScreen = ({
   const handleStartTimer = () => {
     const min = parseInt(inputMinutes, 10);
     if (!min || min <= 0) return;
+    playSE("start");
     pendingMinutesRef.current = min;
     // isDone済みのタスクは除外（別ターン完了分を混入させない）
     const nonDoneIds = new Set(subject.tasks.filter((t) => !t.isDone).map((t) => t.id));
