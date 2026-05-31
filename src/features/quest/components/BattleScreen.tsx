@@ -58,7 +58,7 @@ export const BattleScreen = ({
   const { playDecide, playCancel } = useButtonSE();
 
   const playSE = (src: string) => {
-    new Audio(src).play().catch(() => {});
+    new Audio(src).play().catch((err) => console.warn("[SE]", src, err));
   };
 
   const gameoverPlayedRef = useRef(false);
