@@ -60,6 +60,7 @@ export const BattleScreen = ({
   const seRef = useRef<Record<string, HTMLAudioElement>>({});
   useEffect(() => {
     seRef.current = {
+      check:    new Audio("/se/check.wav"),
       attack:   new Audio("/se/attack.wav"),
       defeat:   new Audio("/se/defeat.wav"),
       damage:   new Audio("/se/damage.wav"),
@@ -79,7 +80,7 @@ export const BattleScreen = ({
     }
   }, [playerHp]);
 
-  const playSE = (key: "attack" | "defeat" | "damage" | "gameover") => {
+  const playSE = (key: "check" | "attack" | "defeat" | "damage" | "gameover") => {
     const audio = seRef.current[key];
     if (!audio) return;
     audio.currentTime = 0;
@@ -223,6 +224,7 @@ export const BattleScreen = ({
   // タイマー稼働中のチェック → やった印のみ（ダメージなし）
   const handleTimerTaskToggle = (taskId: string) => {
     if (subject.tasks.find(t => t.id === taskId)?.isDone) return;
+    playSE("check");
     setTimerCheckedTasks(prev => {
       const next = new Set(prev);
       if (next.has(taskId)) next.delete(taskId); else next.add(taskId);
