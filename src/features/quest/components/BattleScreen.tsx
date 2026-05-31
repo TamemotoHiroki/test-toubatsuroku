@@ -260,6 +260,9 @@ export const BattleScreen = ({
       setIsAttacking(false);
     } else {
       triggerAttackGlitch();
+      clearTimerInterval();
+      setTimerPhase("idle");
+      setTimeLeft(0);
       setMessage(`ゆうしゃのこうげき！\n${totalDamage} のダメージ！`);
       setIsAttacking(false);
     }
