@@ -17,7 +17,7 @@ export default function QuestApp() {
 
   // BGM一元管理（画面状態に応じて1つだけ再生）
   const bgmSrc = (() => {
-    if (questLogic.isCleared) return "/bgm/clear.mp3";
+    if (questLogic.isCleared && questLogic.currentScreen === "home") return "/bgm/clear.mp3";
     if (questLogic.currentScreen === "battle" && questLogic.selectedSubject) {
       if (questLogic.player.hp <= 0) return "/bgm/gameover.mp3";
       const imp = questLogic.selectedSubject.importance;
