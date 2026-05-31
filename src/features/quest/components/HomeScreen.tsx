@@ -97,6 +97,7 @@ export const HomeScreen = ({
                     alt="期末テスト魔王"
                     glitchMode="idle"
                     glitchTrigger={0}
+                    idleVariant={2}
                     className="h-32 w-32"
                   />
                 </div>

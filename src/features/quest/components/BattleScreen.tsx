@@ -325,10 +325,10 @@ export const BattleScreen = ({
               alt={subject.title}
               glitchMode={glitchMode}
               glitchTrigger={glitchTrigger}
-              idleVariant={
-                subject.imageUrl?.includes("/monsters/1") ? 0 :
-                subject.imageUrl?.includes("/monsters/2") ? 1 : 2
-              }
+              idleVariant={(() => {
+                const n = subject.imageUrl?.match(/_(\d+)\.png$/)?.[1];
+                return n === "1" ? 0 : n === "2" ? 1 : 2;
+              })()}
             />
           </div>
         </RetroWindow>

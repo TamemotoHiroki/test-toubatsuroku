@@ -9,6 +9,17 @@ const createTask = (title: string, isDone = false): Task => ({
   isDone,
 });
 
+const getMonsterPool = (importance: number) =>
+  importance <= 2 ? ["/monsters/zako_1.png"] :
+  importance === 3 ? ["/monsters/dragon_2.png", "/monsters/go_2.png", "/monsters/maho_2.png"] :
+                     ["/monsters/enemy_kisi_3.png"];
+
+const normalizeImageUrl = (imageUrl: unknown, importance: number): string => {
+  const pool = getMonsterPool(importance);
+  if (typeof imageUrl === "string" && pool.includes(imageUrl)) return imageUrl;
+  return pool[Math.floor(Math.random() * pool.length)];
+};
+
 const normalizeSubject = (subject: any): Subject => {
   if (Array.isArray(subject?.tasks)) {
     const tasks = subject.tasks.map((task: any, index: number) => ({
@@ -32,7 +43,10 @@ const normalizeSubject = (subject: any): Subject => {
       importance: Number.isFinite(subject.importance)
         ? Number(subject.importance)
         : 3,
-      imageUrl: subject.imageUrl,
+      imageUrl: normalizeImageUrl(
+        subject.imageUrl,
+        Number.isFinite(subject.importance) ? Number(subject.importance) : 3,
+      ),
     };
   }
 
@@ -89,7 +103,7 @@ const INITIAL_SUBJECTS: Subject[] = [
     ],
     current_hp: 300,
     importance: 4,
-    imageUrl: "/monsters/1.png",
+    imageUrl: "/monsters/enemy_kisi_3.png",
   },
   {
     id: "2",
@@ -104,7 +118,7 @@ const INITIAL_SUBJECTS: Subject[] = [
     ],
     current_hp: 500,
     importance: 5,
-    imageUrl: "/monsters/2.png",
+    imageUrl: "/monsters/enemy_kisi_3.png",
   },
 ];
 
@@ -206,10 +220,11 @@ export const useQuestLogic = () => {
 
   const addSubject = (subject: Omit<Subject, "id" | "current_hp">) => {
     const imp = subject.importance;
-    const imageUrl =
-      imp <= 2 ? "/monsters/1.png" :
-      imp === 3 ? "/monsters/2.png" :
-                  "/monsters/3.png";
+    const pool =
+      imp <= 2 ? ["/monsters/1.png"] :
+      imp === 3 ? ["/monsters/2.png"] :
+                  ["/monsters/3.png", "/monsters/4.png"];
+    const imageUrl = pool[Math.floor(Math.random() * pool.length)];
     const newSubject: Subject = {
       ...subject,
       id: crypto.randomUUID(),

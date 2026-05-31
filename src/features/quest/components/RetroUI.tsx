@@ -135,7 +135,7 @@ type GlitchMode = "idle" | "attack" | "defeat";
 const IDLE_VARIANTS = [
   { wrapper: "idleFloat 2.2s ease-in-out infinite",     glitch: "none" },
   { wrapper: "idleFloat 2.2s ease-in-out infinite",     glitch: "idleGlitch 3.5s linear infinite" },
-  { wrapper: "idleBreath 2.8s ease-in-out infinite",    glitch: "idleGlitch 3.5s linear infinite" },
+  { wrapper: "idleBreath 2.8s ease-in-out infinite",    glitch: "idleGlitch 2.3s linear infinite" },
 ];
 
 export const GlitchImage = ({
